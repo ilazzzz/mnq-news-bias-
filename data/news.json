@@ -1,202 +1,194 @@
 {
- "version": 1,
  "meta": {
-  "tz": "America/New_York",
   "laeufe": [
    {
-    "zeit": "01:35",
     "tage": [
      1,
      2,
      3,
      4,
      5
-    ]
+    ],
+    "zeit": "01:35"
    },
    {
     "name": "vor London",
-    "zeit": "02:35",
     "tage": [
      1,
      2,
      3,
      4,
      5
-    ]
+    ],
+    "zeit": "02:35"
    },
    {
-    "zeit": "03:35",
     "tage": [
      1,
      2,
      3,
      4,
      5
-    ]
+    ],
+    "zeit": "03:35"
    },
    {
-    "zeit": "04:35",
     "tage": [
      1,
      2,
      3,
      4,
      5
-    ]
+    ],
+    "zeit": "04:35"
    },
    {
-    "zeit": "05:35",
     "tage": [
      1,
      2,
      3,
      4,
      5
-    ]
+    ],
+    "zeit": "05:35"
    },
    {
-    "zeit": "06:35",
     "tage": [
      1,
      2,
      3,
      4,
      5
-    ]
+    ],
+    "zeit": "06:35"
    },
    {
-    "zeit": "07:35",
     "tage": [
      1,
      2,
      3,
      4,
      5
-    ]
+    ],
+    "zeit": "07:35"
    },
    {
     "name": "vor New York",
-    "zeit": "08:35",
     "tage": [
      1,
      2,
      3,
      4,
      5
-    ]
+    ],
+    "zeit": "08:35"
    },
    {
-    "zeit": "09:35",
     "tage": [
      1,
      2,
      3,
      4,
      5
-    ]
+    ],
+    "zeit": "09:35"
    },
    {
-    "zeit": "10:35",
     "tage": [
      1,
      2,
      3,
      4,
      5
-    ]
+    ],
+    "zeit": "10:35"
    },
    {
-    "zeit": "11:35",
     "tage": [
      1,
      2,
      3,
      4,
      5
-    ]
+    ],
+    "zeit": "11:35"
    },
    {
-    "zeit": "12:35",
     "tage": [
      1,
      2,
      3,
      4,
      5
-    ]
+    ],
+    "zeit": "12:35"
    },
    {
-    "zeit": "13:35",
     "tage": [
      1,
      2,
      3,
      4,
      5
-    ]
+    ],
+    "zeit": "13:35"
    },
    {
-    "zeit": "14:35",
     "tage": [
      1,
      2,
      3,
      4,
      5
-    ]
+    ],
+    "zeit": "14:35"
    },
    {
-    "zeit": "15:35",
     "tage": [
      1,
      2,
      3,
      4,
      5
-    ]
+    ],
+    "zeit": "15:35"
    },
    {
-    "zeit": "16:35",
     "tage": [
      1,
      2,
      3,
      4,
      5
-    ]
+    ],
+    "zeit": "16:35"
    },
    {
     "name": "vor Asien",
-    "zeit": "17:35",
     "tage": [
      0,
      1,
      2,
      3,
      4
-    ]
+    ],
+    "zeit": "17:35"
    },
    {
-    "zeit": "17:35",
     "tage": [
      5
-    ]
+    ],
+    "zeit": "17:35"
    }
   ],
-  "letzterLauf": "2026-10-19T10:25:18Z",
-  "notiz": "News der Woche eingetragen."
- },
- "wochen": {
-  "2026-10-19": {
-   "aktualisiert": "2026-10-19T10:25:18Z",
-   "fazit": "Die Ausgangslage ist bearish. Der Nasdaq kommt aus seiner schwächsten Woche seit Juni, Öl bleibt teuer und die heiße Inflation hält die Fed im Erhöhungsmodus. Zum Wochenstart entspannt sich die Lage etwas: Öl und Anleiherenditen geben nach, Fed-Chef Warsh gab kein Signal für eine Oktober-Erhöhung, und die Nasdaq-Futures liegen rund 1 % im Plus. Große US-Daten gibt es kaum, und die Fed ist in der Schweigephase vor ihrer Sitzung. Entschieden wird die Woche am Mittwochabend mit den Zahlen von Meta, Tesla, Lam Research und Texas Instruments.",
-   "woche": "2026-10-19"
-  }
+  "letzterLauf": "2026-10-19T12:04:30Z",
+  "notiz": "Keine neuen Meldungen.",
+  "tz": "America/New_York"
  },
  "news": [
   {
-   "id": "k-2026-10-19-cpi",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "k-2026-10-19-cpi",
    "impact": 3,
    "kategorie": "Makro",
    "kontext": true,
@@ -212,8 +204,8 @@
    "woche": "2026-10-19"
   },
   {
-   "id": "k-2026-10-19-warsh",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "k-2026-10-19-warsh",
    "impact": 2,
    "kategorie": "Fed",
    "kontext": true,
@@ -229,8 +221,8 @@
    "woche": "2026-10-19"
   },
   {
-   "id": "k-2026-10-19-ki-ausverkauf",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "k-2026-10-19-ki-ausverkauf",
    "impact": 3,
    "kategorie": "Markt",
    "kontext": true,
@@ -246,8 +238,8 @@
    "woche": "2026-10-19"
   },
   {
-   "id": "k-2026-10-19-oel",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "k-2026-10-19-oel",
    "impact": 3,
    "kategorie": "Öl & Geopolitik",
    "kontext": true,
@@ -263,8 +255,8 @@
    "woche": "2026-10-19"
   },
   {
-   "id": "2026-10-19-golf-wochenende",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "2026-10-19-golf-wochenende",
    "impact": 2,
    "kategorie": "Öl & Geopolitik",
    "kontext": false,
@@ -278,8 +270,8 @@
    "von": "claude"
   },
   {
-   "id": "2026-10-19-russland-sanktionen",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "2026-10-19-russland-sanktionen",
    "impact": 2,
    "kategorie": "Öl & Geopolitik",
    "kontext": false,
@@ -294,8 +286,8 @@
    "werte": "Montagvormittag: Brent ~107 $ (−1,8 %) · WTI ~96,9 $ (−2,1 %)"
   },
   {
-   "id": "2026-10-19-china-bip",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "2026-10-19-china-bip",
    "impact": 1,
    "kategorie": "Makro",
    "kontext": false,
@@ -310,8 +302,8 @@
    "werte": "BIP 4,5 % J/J · Prognose 4,4 % · Vorher 4,3 %"
   },
   {
-   "id": "2026-10-19-deepseek",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "2026-10-19-deepseek",
    "impact": 1,
    "kategorie": "Markt",
    "kontext": false,
@@ -325,8 +317,8 @@
    "von": "claude"
   },
   {
-   "id": "2026-10-19-futures-erholung",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "2026-10-19-futures-erholung",
    "impact": 1,
    "kategorie": "Markt",
    "kontext": false,
@@ -341,8 +333,8 @@
    "werte": "NQ +1,0 % · S&P-Futures +0,5 % (Stand 11:00) · zwischenzeitlich über +1,3 %"
   },
   {
-   "id": "2026-10-19-renditen",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "2026-10-19-renditen",
    "impact": 2,
    "kategorie": "Makro",
    "kontext": false,
@@ -357,8 +349,8 @@
    "werte": "10-jährige Rendite ~5,07 % · Chance einer Fed-Erhöhung im Oktober 14,9 % (CME)"
   },
   {
-   "id": "2026-10-19-iran-waffenruhe",
    "aktualisiert": "2026-10-19T11:55:48Z",
+   "id": "2026-10-19-iran-waffenruhe",
    "impact": 2,
    "kategorie": "Öl & Geopolitik",
    "kontext": false,
@@ -372,8 +364,8 @@
    "von": "claude"
   },
   {
-   "id": "2026-10-19-nahb",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "2026-10-19-nahb",
    "impact": 1,
    "kategorie": "Makro",
    "kontext": false,
@@ -390,8 +382,8 @@
    "werte": "Vorher 32"
   },
   {
-   "id": "2026-10-20-bau",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "2026-10-20-bau",
    "impact": 1,
    "kategorie": "Makro",
    "kontext": false,
@@ -408,8 +400,8 @@
    "werte": "Baubeginne: Prognose 1,30 Mio. · Vorher 1,275 Mio. | Genehmigungen: Prognose 1,40 Mio. · Vorher 1,403 Mio."
   },
   {
-   "id": "2026-10-20-pending-home-sales",
    "aktualisiert": "2026-10-19T11:55:48Z",
+   "id": "2026-10-20-pending-home-sales",
    "impact": 1,
    "kategorie": "Makro",
    "kontext": false,
@@ -425,8 +417,8 @@
    "von": "claude"
   },
   {
-   "id": "2026-10-20-netflix",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "2026-10-20-netflix",
    "impact": 2,
    "kategorie": "Earnings",
    "kontext": false,
@@ -443,8 +435,8 @@
    "werte": "Erwartet: Gewinn je Aktie 0,82 $ · Umsatz ~12,9 Mrd. $"
   },
   {
-   "id": "2026-10-20-intuitive-surgical",
    "aktualisiert": "2026-10-19T11:55:48Z",
+   "id": "2026-10-20-intuitive-surgical",
    "impact": 1,
    "kategorie": "Earnings",
    "kontext": false,
@@ -461,8 +453,8 @@
    "werte": "Erwartet: Gewinn je Aktie 2,13 $"
   },
   {
-   "id": "2026-10-20-api-oel",
    "aktualisiert": "2026-10-19T11:55:48Z",
+   "id": "2026-10-20-api-oel",
    "impact": 1,
    "kategorie": "Öl & Geopolitik",
    "kontext": false,
@@ -479,8 +471,8 @@
    "werte": "Vorwoche −11,1 Mio. Barrel"
   },
   {
-   "id": "2026-10-21-eia",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "2026-10-21-eia",
    "impact": 2,
    "kategorie": "Öl & Geopolitik",
    "kontext": false,
@@ -497,8 +489,8 @@
    "werte": "Vorwoche −8,6 Mio. Barrel"
   },
   {
-   "id": "2026-10-21-anleiheauktion-20j",
    "aktualisiert": "2026-10-19T11:55:48Z",
+   "id": "2026-10-21-anleiheauktion-20j",
    "impact": 1,
    "kategorie": "Makro",
    "kontext": false,
@@ -514,8 +506,8 @@
    "von": "claude"
   },
   {
-   "id": "2026-10-21-ibm-sap-csx",
    "aktualisiert": "2026-10-19T11:55:48Z",
+   "id": "2026-10-21-ibm-sap-csx",
    "impact": 1,
    "kategorie": "Earnings",
    "kontext": false,
@@ -532,8 +524,8 @@
    "werte": "Erwartet (Gewinn je Aktie): IBM 2,87 $ · SAP 2,03 $ · CSX 0,53 $"
   },
   {
-   "id": "2026-10-21-lam-ti",
    "aktualisiert": "2026-10-19T11:55:48Z",
+   "id": "2026-10-21-lam-ti",
    "impact": 2,
    "kategorie": "Earnings",
    "kontext": false,
@@ -550,8 +542,8 @@
    "werte": "Erwartet (Gewinn je Aktie): Lam 2,17 $ · TI 2,39 $"
   },
   {
-   "id": "2026-10-21-meta-tesla",
    "aktualisiert": "2026-10-19T11:55:48Z",
+   "id": "2026-10-21-meta-tesla",
    "impact": 3,
    "kategorie": "Earnings",
    "kontext": false,
@@ -568,8 +560,8 @@
    "werte": "Erwartet (Gewinn je Aktie): Meta 6,35 $ · Tesla 0,21 $"
   },
   {
-   "id": "2026-10-22-comcast-honeywell",
    "aktualisiert": "2026-10-19T11:55:48Z",
+   "id": "2026-10-22-comcast-honeywell",
    "impact": 1,
    "kategorie": "Earnings",
    "kontext": false,
@@ -586,8 +578,8 @@
    "werte": "Erwartet (Gewinn je Aktie): Comcast 0,98 $ · Honeywell 2,17 $"
   },
   {
-   "id": "2026-10-22-claims",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "2026-10-22-claims",
    "impact": 2,
    "kategorie": "Makro",
    "kontext": false,
@@ -604,8 +596,8 @@
    "werte": "Prognose 200 Tsd. · Vorher 199 Tsd."
   },
   {
-   "id": "2026-10-22-leading-index",
    "aktualisiert": "2026-10-19T11:55:48Z",
+   "id": "2026-10-22-leading-index",
    "impact": 1,
    "kategorie": "Makro",
    "kontext": false,
@@ -621,8 +613,8 @@
    "von": "claude"
   },
   {
-   "id": "2026-10-22-kc-fed",
    "aktualisiert": "2026-10-19T11:55:48Z",
+   "id": "2026-10-22-kc-fed",
    "impact": 1,
    "kategorie": "Makro",
    "kontext": false,
@@ -638,8 +630,8 @@
    "von": "claude"
   },
   {
-   "id": "2026-10-22-tips-auktion",
    "aktualisiert": "2026-10-19T11:55:48Z",
+   "id": "2026-10-22-tips-auktion",
    "impact": 1,
    "kategorie": "Makro",
    "kontext": false,
@@ -655,8 +647,8 @@
    "von": "claude"
   },
   {
-   "id": "2026-10-22-western-digital",
    "aktualisiert": "2026-10-19T11:55:48Z",
+   "id": "2026-10-22-western-digital",
    "impact": 1,
    "kategorie": "Earnings",
    "kontext": false,
@@ -673,8 +665,8 @@
    "werte": "Erwartet: Gewinn je Aktie 3,97 $"
   },
   {
-   "id": "2026-10-23-pmi",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "2026-10-23-pmi",
    "impact": 2,
    "kategorie": "Makro",
    "kontext": false,
@@ -690,8 +682,8 @@
    "von": "claude"
   },
   {
-   "id": "2026-10-23-umich",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "2026-10-23-umich",
    "impact": 1,
    "kategorie": "Makro",
    "kontext": false,
@@ -708,8 +700,8 @@
    "werte": "Prognose 46,3 (wie der Vorabwert)"
   },
   {
-   "id": "2026-10-28-fomc",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "2026-10-28-fomc",
    "impact": 3,
    "kategorie": "Fed",
    "kontext": false,
@@ -726,8 +718,8 @@
    "werte": "Markt (Stand 16.10.): ~85 % Pause · ~15 % Erhöhung"
   },
   {
-   "id": "2026-10-28-msft-googl",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "2026-10-28-msft-googl",
    "impact": 3,
    "kategorie": "Earnings",
    "kontext": false,
@@ -743,8 +735,8 @@
    "von": "claude"
   },
   {
-   "id": "2026-10-29-bip-pce",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "2026-10-29-bip-pce",
    "impact": 3,
    "kategorie": "Makro",
    "kontext": false,
@@ -760,8 +752,8 @@
    "von": "claude"
   },
   {
-   "id": "2026-10-29-amazon",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "2026-10-29-amazon",
    "impact": 3,
    "kategorie": "Earnings",
    "kontext": false,
@@ -775,8 +767,8 @@
    "von": "claude"
   },
   {
-   "id": "2026-10-29-intel",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "2026-10-29-intel",
    "impact": 2,
    "kategorie": "Earnings",
    "kontext": false,
@@ -790,8 +782,8 @@
    "von": "claude"
   },
   {
-   "id": "2026-10-29-apple",
    "aktualisiert": "2026-10-19T11:55:48Z",
+   "id": "2026-10-29-apple",
    "impact": 3,
    "kategorie": "Earnings",
    "kontext": false,
@@ -807,8 +799,8 @@
    "von": "claude"
   },
   {
-   "id": "2026-11-03-midterms",
    "aktualisiert": "2026-10-19T10:25:18Z",
+   "id": "2026-11-03-midterms",
    "impact": 3,
    "kategorie": "Politik",
    "kontext": false,
@@ -821,5 +813,13 @@
    "url": "https://finance.yahoo.com/economy/policy/article/the-fed-faces-a-politically-fraught-rate-decision-on-the-eve-of-an-election-for-the-third-time-in-a-row-164456429.html",
    "von": "claude"
   }
- ]
+ ],
+ "version": 1,
+ "wochen": {
+  "2026-10-19": {
+   "aktualisiert": "2026-10-19T10:25:18Z",
+   "fazit": "Die Ausgangslage ist bearish. Der Nasdaq kommt aus seiner schwächsten Woche seit Juni, Öl bleibt teuer und die heiße Inflation hält die Fed im Erhöhungsmodus. Zum Wochenstart entspannt sich die Lage etwas: Öl und Anleiherenditen geben nach, Fed-Chef Warsh gab kein Signal für eine Oktober-Erhöhung, und die Nasdaq-Futures liegen rund 1 % im Plus. Große US-Daten gibt es kaum, und die Fed ist in der Schweigephase vor ihrer Sitzung. Entschieden wird die Woche am Mittwochabend mit den Zahlen von Meta, Tesla, Lam Research und Texas Instruments.",
+   "woche": "2026-10-19"
+  }
+ }
 }

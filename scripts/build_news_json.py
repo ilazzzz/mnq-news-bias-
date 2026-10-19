@@ -39,7 +39,7 @@ def main():
 
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     with open(dst, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=1)
+        json.dump(data, f, ensure_ascii=False, indent=1, sort_keys=True)
         f.write("\n")
     print(f"{len(items)} Meldungen, {len(wochen)} Wochen -> {dst}")
 
