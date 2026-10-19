@@ -1,0 +1,948 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>MNQ News-Bias</title>
+<meta name="description" content="Termine und Nachrichten mit Einfluss auf den MNQ, grün oder rot bewertet, mit Tages- und Wochen-Bias.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MNQ News">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F1F3F6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0B0E13" media="(prefers-color-scheme: dark)">
+<meta name="format-detection" content="telephone=no">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: Morgenzettel eines Futures-Traders als Handy-App. Kopf mit Stand und Wochenwahl, zwei Bias-Anzeigen,
+   Feld „Große News“ (ab 1080px eigene Spalte), klebende Tagesleiste, darunter die Termine als Zeitliste. */
+:root{
+  --bg:#F1F3F6;
+  --surface:#FFFFFF;
+  --ink:#10141B;
+  --muted:#586174;
+  --faint:#6B7486;
+  --line:#DBE0E7;
+  --line-strong:#C3CAD5;
+  --accent:#2B4DB8;
+  --accent-ink:#FFFFFF;
+  --bull:#0A7348; --bull-bg:#E1F2E9; --bull-line:#A8D7BE;
+  --bear:#B42B35; --bear-bg:#FAE5E6; --bear-line:#EDB2B6;
+  --flat:#56607A; --flat-bg:#E9ECF2; --flat-line:#CBD1DC;
+  --sess-a:#E3E6ED; --sess-l:#D9E1F4; --sess-n:#C5D3F6; --sess-ink:#3D4659;
+  --font-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --font-body:"IBM Plex Sans",-apple-system,"Segoe UI",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0B0E13; --surface:#131820; --ink:#E6E9EF; --muted:#9AA3B4; --faint:#7A8497;
+    --line:#242B36; --line-strong:#344052;
+    --accent:#93AAFF; --accent-ink:#0B0E13;
+    --bull:#47D597; --bull-bg:#0E2219; --bull-line:#1E4D37;
+    --bear:#FF7078; --bear-bg:#291215; --bear-line:#5A242A;
+    --flat:#A6AFC2; --flat-bg:#191E28; --flat-line:#2D3545;
+    --sess-a:#1A1F29; --sess-l:#1B2437; --sess-n:#223055; --sess-ink:#B9C2D6;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B0E13; --surface:#131820; --ink:#E6E9EF; --muted:#9AA3B4; --faint:#7A8497;
+  --line:#242B36; --line-strong:#344052;
+  --accent:#93AAFF; --accent-ink:#0B0E13;
+  --bull:#47D597; --bull-bg:#0E2219; --bull-line:#1E4D37;
+  --bear:#FF7078; --bear-bg:#291215; --bear-line:#5A242A;
+  --flat:#A6AFC2; --flat-bg:#191E28; --flat-line:#2D3545;
+  --sess-a:#1A1F29; --sess-l:#1B2437; --sess-n:#223055; --sess-ink:#B9C2D6;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;background:var(--bg);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+img{max-width:100%}
+[hidden]{display:none!important}
+.wrap{max-width:780px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 64px}
+button{font:inherit;color:inherit}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+
+/* Kopf */
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px 16px;flex-wrap:wrap}
+.brand{min-width:0}
+.brand h1{font-family:var(--font-display);font-stretch:88%;font-weight:800;font-size:1.7rem;letter-spacing:-.01em;line-height:1.05;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sym{font-family:var(--font-mono);font-weight:600;font-size:.62em;letter-spacing:.04em;padding:3px 6px 2px;border:1.5px solid var(--ink);border-radius:4px;line-height:1}
+.sub{margin:6px 0 0;color:var(--muted);font-size:.8rem;line-height:1.4}
+.auto{margin:4px 0 0;font-size:.76rem;color:var(--muted);line-height:1.35}
+.auto .live{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:6px;vertical-align:1px}
+.auto .live.off{background:var(--bear)}
+.auto-note{margin:2px 0 0;font-size:.76rem;color:var(--faint);line-height:1.35}
+.auto-link{margin:4px 0 0;font-size:.76rem;line-height:1.35}
+.auto-link a{color:var(--accent);font-weight:600;text-decoration:none}
+.weeknav{display:flex;align-items:center;gap:4px}
+.weeknav button{width:36px;height:36px;border:1px solid var(--line-strong);background:var(--surface);border-radius:8px;cursor:pointer;font-size:1.1rem;line-height:1}
+.weeknav button:hover{border-color:var(--ink)}
+.weeknav .reload{width:auto;padding:0 12px 0 10px;margin-right:6px;display:inline-flex;align-items:center;gap:6px;font-size:.85rem;font-weight:600;background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.weeknav .reload:hover{border-color:var(--accent);filter:brightness(1.08)}
+.ri{display:inline-block;font-size:1.05rem;line-height:1}
+.ri.spin{animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.wk{display:flex;flex-direction:column;align-items:center;font-family:var(--font-mono);font-size:.8rem;font-weight:600;min-width:7.6em;line-height:1.2}
+.wk small{font-weight:400;color:var(--muted);font-size:.72rem}
+
+/* Installationshinweis */
+.hint{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px;padding:10px 12px;border:1px solid var(--accent);border-radius:10px;background:var(--surface);font-size:.86rem}
+.hint p{margin:0;flex:1 1 220px;min-width:0}
+
+/* Bias-Anzeigen */
+.gauges{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}
+.gauge{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 12px 11px;cursor:pointer;min-width:0}
+.gauge:hover{border-color:var(--line-strong)}
+.gauge[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.g-k{font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.g-v{font-family:var(--font-display);font-weight:800;font-stretch:78%;font-size:1.5rem;line-height:1.05;text-wrap:balance}
+.g-c{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:.72rem;color:var(--muted)}
+.bull{color:var(--bull)} .bear{color:var(--bear)} .flat{color:var(--flat)} .open{color:var(--faint)}
+.meter{position:relative;display:block;height:8px;border-radius:4px;margin:4px 0 2px;background:linear-gradient(90deg,var(--bear) 0%,var(--bear-line) 36%,var(--flat-line) 50%,var(--bull-line) 64%,var(--bull) 100%)}
+.meter::after{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--ink);opacity:.35}
+.meter i{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--surface);border:3px solid var(--ink);box-shadow:0 0 0 2px var(--surface);z-index:1}
+.meter.mini{height:6px;margin:0}
+.meter.mini i{width:11px;height:11px;margin:-5.5px 0 0 -5.5px;border-width:2.5px}
+
+/* Tagesleiste */
+#tabs-anchor{height:0}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding-block:12px 10px;margin-top:6px;border-bottom:1px solid var(--line)}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 2px 6px;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer;line-height:1.15;white-space:nowrap}
+.tab:hover{border-color:var(--line-strong)}
+.tab .d{font-size:.8rem;font-weight:600}
+.tab .n{font-family:var(--font-mono);font-size:.7rem;color:var(--muted)}
+.tab.today .n{color:var(--accent);font-weight:600}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tab[aria-selected="true"] .n{color:inherit;opacity:.8}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--line-strong);flex:none}
+.dot.bull{background:var(--bull)} .dot.bear{background:var(--bear)} .dot.flat{background:var(--flat)}
+.dot.open{background:transparent;box-shadow:inset 0 0 0 1.5px var(--faint)}
+.tab .dot{margin-top:3px}
+
+/* Abschnitte */
+.sec{margin-top:24px}
+.sec > h2,.grp > h3{font-family:var(--font-display);font-stretch:92%;font-weight:700;font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.grp{margin-top:18px}
+.note{font-family:var(--font-body);text-transform:none;letter-spacing:0;font-weight:400;color:var(--faint);font-size:.8rem}
+.fazit p{margin:0;max-width:65ch;font-size:1rem;line-height:1.55}
+.list{display:grid;gap:8px}
+.empty{color:var(--muted);font-size:.9rem;padding:14px;border:1px dashed var(--line-strong);border-radius:10px;text-align:center;margin:0}
+.empty.big{margin-top:24px;padding:28px 16px}
+
+/* Wochenübersicht */
+.days{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.dayrow{display:grid;grid-template-columns:3.6rem minmax(0,1fr) 7.6rem;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 12px;cursor:pointer}
+.dayrow:hover{border-color:var(--line-strong)}
+.dayrow.is-today{border-color:var(--accent)}
+.dn{font-weight:600;line-height:1.2}
+.dn small{display:block;font-family:var(--font-mono);font-weight:400;color:var(--muted);font-size:.72rem}
+.dv{font-size:.82rem;font-weight:600;line-height:1.25;text-align:right}
+.dv small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}
+
+/* Kompakte Zeilen */
+.crow{display:grid;grid-template-columns:4.6rem minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;cursor:pointer}
+.crow:hover{border-color:var(--line-strong)}
+.crow .w{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:.74rem;color:var(--muted);line-height:1.3}
+.crow .t{font-size:.9rem;font-weight:500;line-height:1.3;min-width:0}
+.crow .s{display:flex;align-items:center;gap:8px}
+
+/* Tageskopf und Börsenstreifen */
+.dayhead{display:flex;align-items:baseline;justify-content:space-between;gap:6px 12px;flex-wrap:wrap;margin-top:18px}
+.dayhead h2{font-family:var(--font-display);font-stretch:90%;font-weight:800;font-size:1.3rem;margin:0;letter-spacing:-.005em;text-wrap:balance}
+.chip{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:.76rem;font-weight:600;padding:3px 8px;border-radius:6px;border:1px solid currentColor;white-space:nowrap}
+.strip{margin:12px 0 0}
+.track{position:relative;height:40px;border-radius:6px;background:var(--surface);border:1px solid var(--line);overflow:hidden}
+.band{position:absolute;height:15px;border-radius:3px;font-family:var(--font-mono);font-size:.6rem;letter-spacing:.05em;text-transform:uppercase;color:var(--sess-ink);display:flex;align-items:center;padding:0 5px;white-space:nowrap;overflow:hidden}
+.band.a{top:3px;background:var(--sess-a)} .band.l{top:3px;background:var(--sess-l)} .band.n{top:21px;background:var(--sess-n)}
+.tk{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--faint);z-index:1}
+.tk.i3{width:3px;margin-left:-1.5px}
+.tk.bull{background:var(--bull)} .tk.bear{background:var(--bear)} .tk.flat{background:var(--flat)}
+.tk.open{background:repeating-linear-gradient(to bottom,var(--muted) 0 3px,transparent 3px 6px)}
+.now{position:absolute;top:0;bottom:0;width:0;border-left:2px solid var(--accent);z-index:2}
+.axis{position:relative;height:16px;font-family:var(--font-mono);font-size:.64rem;color:var(--faint)}
+.axis span{position:absolute;top:2px;transform:translateX(-50%)}
+.axis span:first-child{transform:none}
+.axis span:last-child{transform:translateX(-100%)}
+.strip-cap{margin:0;font-size:.72rem;color:var(--faint)}
+
+/* Nachrichtenkarten */
+.card{display:grid;grid-template-columns:3.3rem minmax(0,1fr);gap:10px;padding:12px 12px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface)}
+.card.bull{background:var(--bull-bg);border-color:var(--bull-line);color:var(--ink)}
+.card.bear{background:var(--bear-bg);border-color:var(--bear-line);color:var(--ink)}
+.card.flat{background:var(--flat-bg);border-color:var(--flat-line);color:var(--ink)}
+.card.open{background:var(--surface);border-style:dashed;border-color:var(--line-strong);color:var(--ink)}
+.c-time{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:600;font-size:.9rem;line-height:1.25;padding-top:1px}
+.c-time small{display:block;font-weight:400;color:var(--muted);font-size:.7rem;margin-top:2px}
+.c-body{min-width:0}
+.c-meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-bottom:5px}
+.pill{font-size:.66rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:2px 7px 1px 6px;border-radius:999px;border:1px solid currentColor;white-space:nowrap}
+.pill.open{color:var(--muted);border-style:dashed}
+.cat{font-size:.74rem;color:var(--muted)}
+.mine{font-family:var(--font-mono);font-size:.68rem;color:var(--accent)}
+.imp{display:inline-flex;gap:2px;align-items:flex-end;margin-left:auto;height:12px}
+.imp i{width:4px;border-radius:1px;background:var(--line-strong)}
+.imp i:nth-child(1){height:5px} .imp i:nth-child(2){height:8px} .imp i:nth-child(3){height:12px}
+.imp i.on{background:var(--ink)}
+.c-title{font-family:var(--font-body);font-weight:600;font-size:1rem;line-height:1.3;margin:0;text-wrap:balance}
+.c-text{margin:4px 0 0;font-size:.92rem}
+.c-vals{margin:6px 0 0;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:.76rem;color:var(--muted);overflow-wrap:anywhere}
+.c-scen{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:3px;font-size:.86rem}
+.c-scen b{font-weight:600}
+.c-scen .up b{color:var(--bull)} .c-scen .down b{color:var(--bear)}
+.c-due{margin:6px 0 0;font-size:.8rem;color:var(--accent);font-weight:500}
+.c-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;font-size:.76rem;color:var(--muted)}
+.c-foot a{color:var(--muted);text-decoration:none}
+.c-foot a:hover{text-decoration:underline}
+
+/* Bedienelemente */
+.btn{border:1px solid var(--line-strong);background:var(--surface);border-radius:7px;padding:6px 10px;font-size:.8rem;font-weight:600;cursor:pointer;line-height:1.2}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.ghost{background:transparent}
+.btn.danger{background:var(--bear);color:var(--surface);border-color:var(--bear)}
+.btn.set.bull{color:var(--bull)} .btn.set.bear{color:var(--bear)} .btn.set.flat{color:var(--flat)} .btn.set.open{color:var(--muted)}
+.btn.set[aria-pressed="true"]{border-color:currentColor;box-shadow:inset 0 0 0 1px currentColor}
+.btn:disabled{opacity:.5;cursor:default}
+.panel{margin-top:10px;padding-top:10px;border-top:1px solid var(--line-strong);display:grid;gap:8px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.lbl{display:block;font-size:.72rem;font-weight:600;color:var(--muted);letter-spacing:.03em}
+.msg{margin:0;font-size:.8rem;color:var(--muted)}
+.addform input,.addform textarea,.addform select{width:100%;font:inherit;font-size:16px;padding:8px 10px;border:1px solid var(--line-strong);border-radius:7px;background:var(--bg);color:var(--ink)}
+.addform textarea{resize:vertical;min-height:4.5em}
+.addwrap{margin-top:18px}
+.btn.add{width:100%;padding:11px;border-style:dashed;background:transparent;color:var(--accent);border-color:var(--accent)}
+.addform{margin-top:18px;display:grid;gap:8px;padding:14px;border:1px solid var(--line-strong);border-radius:10px;background:var(--surface)}
+.addform h3{margin:0 0 2px;font-size:.95rem}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+
+/* Große News: eigene Spalte ab 1080px, darunter zwischen Bias und Tagesleiste */
+.layout{display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "gauges" "tn" "main"}
+.l-left{display:contents}
+.l-head{grid-area:head;min-width:0} .l-gauges{grid-area:gauges;min-width:0} .l-main{grid-area:main;min-width:0}
+.l-tn{grid-area:tn;min-width:0;margin-top:16px}
+.tn{background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;padding:14px 12px 12px}
+.tn-head{display:flex;align-items:center;gap:8px}
+.tn-head h2{font-family:var(--font-display);font-stretch:88%;font-weight:800;font-size:1.15rem;line-height:1.1;margin:0}
+.tn-sub{margin:3px 0 0;font-size:.78rem;color:var(--muted);line-height:1.35}
+.tn-h3{font-family:var(--font-display);font-stretch:92%;font-weight:700;font-size:.7rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px}
+.tn-list{display:grid;gap:6px}
+.tn-row{display:grid;gap:4px;width:100%;text-align:left;padding:9px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.tn-row:hover{border-color:var(--ink)}
+.tn-row.bull{background:var(--bull-bg);border-color:var(--bull-line);color:var(--ink)}
+.tn-row.bear{background:var(--bear-bg);border-color:var(--bear-line);color:var(--ink)}
+.tn-row.flat{background:var(--flat-bg);border-color:var(--flat-line);color:var(--ink)}
+.tn-row.open{border-style:dashed;border-color:var(--line-strong);color:var(--ink)}
+.tn-row.is-new{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.tn-top{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px}
+.tn-when{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:.7rem;color:var(--muted)}
+.tn-title{font-weight:600;font-size:.92rem;line-height:1.3}
+.tn-vals{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:.74rem;line-height:1.4;overflow-wrap:anywhere}
+.tn-title,.tn-vals{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.tn-new{font-family:var(--font-mono);font-size:.62rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:4px;background:var(--accent);color:var(--accent-ink);white-space:nowrap}
+.tn-top .tn-new{margin-left:auto}
+.tn-empty{padding:10px;font-size:.82rem}
+.tn-more{display:none;margin-top:10px;width:100%}
+@media (max-width:1079px){.tn-list.next .tn-row:nth-child(n+3){display:none}.tn.all .tn-list.next .tn-row{display:grid}.tn-more{display:block}}
+@media (min-width:1080px){
+  .wrap{max-width:1180px}
+  .layout{grid-template-columns:minmax(0,1fr) 340px;column-gap:28px;grid-template-areas:"head head" "left tn";align-items:start}
+  .l-left{display:block;grid-area:left;min-width:0}
+  .l-tn{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);max-height:calc(100vh - 24px - env(safe-area-inset-top,0px));overflow-y:auto}
+}
+
+/* Fuß */
+.foot{margin-top:28px;border-top:1px solid var(--line);padding-top:12px}
+.how summary{cursor:pointer;font-weight:600;font-size:.9rem}
+.how p{max-width:65ch;color:var(--muted);font-size:.88rem;margin:8px 0 0}
+.fine{font-size:.78rem;color:var(--faint);margin:14px 0 0;max-width:65ch}
+
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translate(-50%,16px);opacity:0;pointer-events:none;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:8px;font-size:.88rem;max-width:calc(100% - 32px);width:max-content;transition:opacity .2s,transform .2s;z-index:20}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.err{background:var(--bear);color:var(--surface)}
+
+@media (max-width:420px){
+  .g-v{font-size:1.3rem}
+  .dayrow{grid-template-columns:3.2rem minmax(0,1fr) 6.6rem;gap:10px;padding:9px 10px}
+  .card{grid-template-columns:2.9rem minmax(0,1fr);gap:8px;padding:11px 10px 9px}
+}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+"use strict";
+
+/*LOGIC-START*/
+const TZ_DE = "Europe/Berlin", TZ_NY = "America/New_York";
+const DAYS_SHORT = ["So","Mo","Di","Mi","Do","Fr","Sa"];
+const DAYS_LONG = ["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"];
+const MONTHS = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
+const STATI = ["bullish","bearish","neutral","offen"];
+const fmts = {};
+
+function zparts(ms, tz){
+  const f = fmts[tz] || (fmts[tz] = new Intl.DateTimeFormat("en-US", {timeZone: tz, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit"}));
+  const p = {};
+  for (const x of f.formatToParts(new Date(ms))) p[x.type] = x.value;
+  const h = (+p.hour) % 24, mi = +p.minute;
+  return {ymd: `${p.year}-${p.month}-${p.day}`, hm: `${String(h).padStart(2, "0")}:${p.minute}`, min: h * 60 + mi, y: +p.year, mo: +p.month, d: +p.day, h, mi, s: +p.second};
+}
+function ymdUTC(ymd){ const [y, m, d] = ymd.split("-").map(Number); return Date.UTC(y, m - 1, d, 12); }
+function addDays(ymd, n){ return new Date(ymdUTC(ymd) + n * 864e5).toISOString().slice(0, 10); }
+function dow(ymd){ return new Date(ymdUTC(ymd)).getUTCDay(); }
+function isWeekend(ymd){ const w = dow(ymd); return w === 0 || w === 6; }
+function mondayOf(ymd){ return addDays(ymd, -((dow(ymd) + 6) % 7)); }
+function nextWeekday(ymd){ let d = addDays(ymd, 1); while (isWeekend(d)) d = addDays(d, 1); return d; }
+function tradingDayOnOrAfter(ymd){ let d = ymd; while (isWeekend(d)) d = addDays(d, 1); return d; }
+function tzOffsetMin(tz, ms){
+  const base = ms - (((ms % 1000) + 1000) % 1000);
+  const p = zparts(base, tz);
+  return Math.round((Date.UTC(p.y, p.mo - 1, p.d, p.h, p.mi, p.s) - base) / 60000);
+}
+function zonedToUTC(ymd, hm, tz){
+  const [y, m, d] = ymd.split("-").map(Number), [H, M] = hm.split(":").map(Number);
+  const guess = Date.UTC(y, m - 1, d, H, M);
+  const off = tzOffsetMin(tz, guess);
+  let t = guess - off * 60000;
+  const off2 = tzOffsetMin(tz, t);
+  if (off2 !== off) t = guess - off2 * 60000;
+  return t;
+}
+function itemMs(it){ const t = Date.parse(it && it.ts); return isNaN(t) ? null : t; }
+function deParts(it){ const t = itemMs(it); return t === null ? null : zparts(t, TZ_DE); }
+/* Handelstag, auf dessen US-Sitzung eine Meldung wirkt: nach 16:00 New Yorker Zeit zählt sie für den nächsten Handelstag, am Wochenende für Montag. */
+function effDay(it){
+  if (!it || it.kontext) return null;
+  const t = itemMs(it); if (t === null) return null;
+  const n = zparts(t, TZ_NY);
+  if (isWeekend(n.ymd)) return tradingDayOnOrAfter(n.ymd);
+  if (!it.ohneZeit && n.min >= 16 * 60) return nextWeekday(n.ymd);
+  return n.ymd;
+}
+function weekOf(it){ if (!it) return null; if (it.kontext) return it.woche || null; const d = effDay(it); return d ? mondayOf(d) : null; }
+function normStatus(s){ return STATI.includes(s) ? s : "offen"; }
+function normImpact(x){ x = Math.round(Number(x)); return x >= 1 && x <= 3 ? x : 1; }
+function bias(items){
+  let num = 0, den = 0; const c = {bullish: 0, bearish: 0, neutral: 0, offen: 0};
+  for (const it of items){
+    const s = normStatus(it.status); c[s]++;
+    if (s === "offen") continue;
+    const w = normImpact(it.impact); den += w;
+    if (s === "bullish") num += w; else if (s === "bearish") num -= w;
+  }
+  return {score: den ? num / den : null, c};
+}
+function verdict(score){
+  if (score === null) return {label: "Noch offen", cls: "open"};
+  if (score >= 0.5) return {label: "Bullish", cls: "bull"};
+  if (score >= 0.15) return {label: "Leicht bullish", cls: "bull"};
+  if (score > -0.15) return {label: "Neutral", cls: "flat"};
+  if (score > -0.5) return {label: "Leicht bearish", cls: "bear"};
+  return {label: "Bearish", cls: "bear"};
+}
+function dayItems(news, D){ return news.filter(it => !it.kontext && effDay(it) === D); }
+function weekItems(news, W){ return news.filter(it => weekOf(it) === W); }
+function isoWeek(ymd){
+  const d = new Date(ymdUTC(ymd));
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7) + 3);
+  return Math.ceil(((d.getTime() - Date.UTC(d.getUTCFullYear(), 0, 1)) / 864e5 + 1) / 7);
+}
+/*LOGIC-END*/
+
+const PILL = {bullish: "▲ Bullish", bearish: "▼ Bearish", neutral: "● Neutral", offen: "○ Offen"};
+const LABEL = {bullish: "Bullish", bearish: "Bearish", neutral: "Neutral", offen: "Offen"};
+const CLS = {bullish: "bull", bearish: "bear", neutral: "flat", offen: "open"};
+const nf = new Intl.NumberFormat("de-DE", {minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: "exceptZero"});
+const fmtScore = s => s === null ? "–" : nf.format(s).replace("-", "−");
+const dmy = ymd => { const [, m, d] = ymd.split("-"); return `${+d}.${+m}.`; };
+const dayShort = ymd => DAYS_SHORT[dow(ymd)];
+const dayLong = ymd => { const [, m, d] = ymd.split("-").map(Number); return `${DAYS_LONG[dow(ymd)]}, ${d}. ${MONTHS[m - 1]}`; };
+const todayDE = () => zparts(Date.now(), TZ_DE).ymd;
+const todayTrading = () => tradingDayOnOrAfter(todayDE());
+const weekDays = W => [0, 1, 2, 3, 4].map(i => addDays(W, i));
+const byTs = (a, b) => (itemMs(a) || 0) - (itemMs(b) || 0);
+const str = (x, max) => typeof x === "string" ? x.trim().slice(0, max) : "";
+const safeUrl = u => typeof u === "string" && /^https:\/\//i.test(u);
+const pct = min => (Math.max(0, Math.min(1440, min)) / 1440 * 100).toFixed(2) + "%";
+
+/* ---------- Speicher auf dem Handy ---------- */
+const CLAUDE_PAGE = "https://claude.ai/artifact/NkzF6zU1P3y4jnssPk8qRK";
+const LS_LOCAL = "mnq-news-bias:lokal:v1", LS_DATA = "mnq-news-bias:daten:v1", LS_HINT = "mnq-news-bias:hinweis:v1";
+function lsGet(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v){ try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+function sanitize(d){
+  return {
+    news: Array.isArray(d && d.news) ? d.news.filter(x => x && typeof x === "object" && typeof x.id === "string") : [],
+    wochen: d && d.wochen && typeof d.wochen === "object" ? d.wochen : {},
+    meta: d && d.meta && typeof d.meta === "object" ? d.meta : null
+  };
+}
+let DATA = null;
+let L = {overrides: {}, own: []};
+try {
+  const raw = JSON.parse(lsGet(LS_LOCAL) || "null");
+  if (raw && typeof raw === "object") L = {
+    overrides: raw.overrides && typeof raw.overrides === "object" ? raw.overrides : {},
+    own: Array.isArray(raw.own) ? raw.own.filter(x => x && typeof x.id === "string") : []
+  };
+} catch (e) {}
+function saveLocal(){ if (!lsSet(LS_LOCAL, JSON.stringify(L))) toast("Speichern auf diesem Handy hat nicht geklappt.", true); }
+
+const S = {
+  news: [], wochen: {}, auto: null, tnAll: false, ready: false, offline: false, loading: false, loadedAt: 0,
+  standalone: (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true,
+  hintHidden: lsGet(LS_HINT) === "1",
+  week: mondayOf(todayTrading()), tab: isWeekend(todayDE()) ? "woche" : todayTrading(),
+  open: null, confirmDel: null, addOpen: false, add: {text: "", time: "", impact: "2"}
+};
+
+function applyData(){
+  const base = (DATA && DATA.news) || [];
+  S.news = base.map(n => {
+    const o = L.overrides[n.id];
+    return o && STATI.includes(o) ? Object.assign({}, n, {status: o, lokal: true}) : n;
+  }).concat(L.own);
+  S.wochen = (DATA && DATA.wochen) || {};
+  S.auto = (DATA && DATA.meta) || null;
+  S.ready = !!DATA;
+}
+
+function h(tag, props, ...kids){
+  const el = document.createElement(tag);
+  if (props) for (const [k, v] of Object.entries(props)){
+    if (v === null || v === undefined || v === false) continue;
+    if (k === "class") el.className = v;
+    else if (k === "text") el.textContent = v;
+    else if (k.startsWith("on") && typeof v === "function") el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const kid of kids.flat(Infinity)){
+    if (kid === null || kid === undefined || kid === false) continue;
+    el.append(kid instanceof Node ? kid : String(kid));
+  }
+  return el;
+}
+
+let toastTimer = null;
+function toast(text, err){
+  const el = document.getElementById("toast");
+  el.textContent = text;
+  el.className = "toast show" + (err ? " err" : "");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = "toast"; }, 3800);
+}
+
+/* ---------- Bausteine ---------- */
+function meter(score, extra){
+  const m = h("span", {class: "meter" + (extra ? " " + extra : ""), role: "img", "aria-label": score === null ? "Noch keine bewerteten News" : `Bias ${fmtScore(score)} auf einer Skala von −1 bis +1`});
+  if (score !== null) m.append(h("i", {style: `left:${((score + 1) / 2 * 100).toFixed(1)}%`}));
+  return m;
+}
+function impEl(n){
+  const lab = ["", "gering", "mittel", "hoch"][n];
+  return h("span", {class: "imp", title: "Wichtigkeit: " + lab, role: "img", "aria-label": "Wichtigkeit " + lab}, [1, 2, 3].map(i => h("i", {class: i <= n ? "on" : null})));
+}
+function countsLine(b){
+  const p = [];
+  if (b.c.bullish) p.push(`${b.c.bullish} grün`);
+  if (b.c.bearish) p.push(`${b.c.bearish} rot`);
+  if (b.c.neutral) p.push(`${b.c.neutral} neutral`);
+  if (b.c.offen) p.push(`${b.c.offen} offen`);
+  return (b.score === null ? "" : fmtScore(b.score) + " · ") + (p.join(" · ") || "keine News");
+}
+function standText(){
+  let mx = 0;
+  for (const it of S.news){ const t = Date.parse(it.aktualisiert); if (t > mx) mx = t; }
+  for (const k in S.wochen){ const t = Date.parse(S.wochen[k].aktualisiert); if (t > mx) mx = t; }
+  if (!mx) return "";
+  const p = zparts(mx, TZ_DE);
+  return `${dayShort(p.ymd)} ${dmy(p.ymd)}, ${p.hm} Uhr`;
+}
+
+function whenDE(ms){
+  const p = zparts(ms, TZ_DE), T = todayDE();
+  if (p.ymd === T) return p.hm;
+  if (p.ymd === addDays(T, 1)) return "morgen " + p.hm;
+  if (p.ymd === addDays(T, -1)) return "gestern " + p.hm;
+  return `${dayShort(p.ymd)} ${dmy(p.ymd)} ${p.hm}`;
+}
+function nextRun(a){
+  const baseTz = typeof a.tz === "string" ? a.tz : TZ_NY;
+  const days = x => Array.isArray(x) ? x.map(Number) : [1, 2, 3, 4, 5];
+  let slots = Array.isArray(a.laeufe)
+    ? a.laeufe.filter(l => l && typeof l === "object").map(l => ({tz: typeof l.tz === "string" ? l.tz : baseTz, zeit: l.zeit, tage: days(l.tage), name: str(l.name, 40)}))
+    : (Array.isArray(a.zeiten) ? a.zeiten.map(z => ({tz: baseTz, zeit: z, tage: days(a.tage), name: ""})) : []);
+  slots = slots.filter(s => typeof s.zeit === "string" && /^\d{2}:\d{2}$/.test(s.zeit));
+  const now = Date.now();
+  let best = null;
+  for (const s of slots){
+    let d;
+    try { d = zparts(now, s.tz).ymd; } catch (e) { continue; }
+    for (let i = 0; i < 9; i++, d = addDays(d, 1)){
+      if (!s.tage.includes(dow(d))) continue;
+      const t = zonedToUTC(d, s.zeit, s.tz);
+      if (t > now){ if (!best || t < best.t) best = {t, name: s.name}; break; }
+    }
+  }
+  return best;
+}
+function autoInfo(){
+  const a = S.auto; if (!a) return null;
+  const last = Date.parse(a.letzterLauf), nx = nextRun(a);
+  const parts = [S.offline ? "Offline, du siehst den letzten Stand" : "Aktualisiert sich selbst"];
+  if (!isNaN(last)) parts.push("zuletzt geprüft " + whenDE(last) + " Uhr");
+  if (nx && !S.offline) parts.push("nächste Prüfung " + whenDE(nx.t) + " Uhr" + (nx.name ? " (" + nx.name + ")" : ""));
+  return {line: parts.join(" · "), note: str(a.notiz, 200)};
+}
+
+function header(){
+  const st = standText(), au = autoInfo();
+  return h("header", {class: "top"},
+    h("div", {class: "brand"},
+      h("h1", null, h("span", {class: "sym", text: "MNQ"}), "News-Bias"),
+      h("p", {class: "sub", text: "Micro-Nasdaq-100-Future · alle Zeiten deutsche Zeit" + (!au && st ? " · Stand " + st : "")}),
+      au ? h("p", {class: "auto"}, h("i", {class: "live" + (S.offline ? " off" : ""), "aria-hidden": "true"}), au.line) : null,
+      au && au.note ? h("p", {class: "auto-note", text: "Letzte Prüfung: " + au.note}) : null,
+      h("p", {class: "auto-link"}, h("a", {href: CLAUDE_PAGE, target: "_blank", rel: "noopener noreferrer"}, "Sofort prüfen lassen: in Claude öffnen ↗"))),
+    h("div", {class: "weeknav"},
+      h("button", {type: "button", class: "reload", onclick: () => loadData(true)}, h("span", {class: "ri" + (S.loading ? " spin" : ""), "aria-hidden": "true"}, "↻"), "Aktualisieren"),
+      h("button", {type: "button", "aria-label": "Vorige Woche", onclick: () => shiftWeek(-1)}, "‹"),
+      h("span", {class: "wk"}, `KW ${isoWeek(S.week)}`, h("small", {text: `${dmy(S.week)}–${dmy(addDays(S.week, 4))}`})),
+      h("button", {type: "button", "aria-label": "Nächste Woche", onclick: () => shiftWeek(1)}, "›")));
+}
+
+function installHint(){
+  if (S.standalone || S.hintHidden || !/iPhone|iPad|iPod/.test(navigator.userAgent)) return null;
+  return h("div", {class: "hint", role: "note"},
+    h("p", null, h("b", {text: "Als App installieren: "}), "Tippe in Safari auf das Teilen-Symbol und dann auf „Zum Home-Bildschirm“."),
+    h("button", {class: "btn ghost", type: "button", onclick: () => { S.hintHidden = true; lsSet(LS_HINT, "1"); render(); }}, "Ausblenden"));
+}
+
+function gauge(kind){
+  const isWeek = kind === "woche";
+  const D = isWeek ? null : todayTrading();
+  const b = bias(isWeek ? weekItems(S.news, S.week) : dayItems(S.news, D));
+  const v = verdict(b.score);
+  const key = isWeek ? `Woche · KW ${isoWeek(S.week)}` : (D === todayDE() ? `Heute · ${dayShort(D)} ${dmy(D)}` : `Nächster Handelstag · ${dayShort(D)} ${dmy(D)}`);
+  const target = isWeek ? "woche" : D;
+  const pressed = isWeek ? S.tab === "woche" : (S.tab === D && S.week === mondayOf(D));
+  return h("button", {class: "gauge", type: "button", "aria-pressed": String(pressed), onclick: () => { if (!isWeek) S.week = mondayOf(D); setTab(target); }},
+    h("span", {class: "g-k", text: key}),
+    h("span", {class: "g-v " + v.cls, text: v.label}),
+    meter(b.score),
+    h("span", {class: "g-c", text: countsLine(b)}));
+}
+
+function tabs(){
+  const T = todayDE();
+  const list = [h("button", {class: "tab", role: "tab", type: "button", "aria-selected": String(S.tab === "woche"), onclick: () => setTab("woche")},
+    h("span", {class: "d", text: "Woche"}), h("span", {class: "n", text: "KW " + isoWeek(S.week)}), h("i", {class: "dot " + verdict(bias(weekItems(S.news, S.week)).score).cls, "aria-hidden": "true"}))];
+  for (const D of weekDays(S.week)){
+    list.push(h("button", {class: "tab" + (D === T ? " today" : ""), role: "tab", type: "button", "aria-selected": String(S.tab === D), onclick: () => setTab(D)},
+      h("span", {class: "d", text: dayShort(D)}), h("span", {class: "n", text: D === T ? "heute" : dmy(D)}),
+      h("i", {class: "dot " + verdict(bias(dayItems(S.news, D)).score).cls, "aria-hidden": "true"})));
+  }
+  return h("nav", {class: "tabs", role: "tablist", "aria-label": "Woche oder Tag wählen"}, list);
+}
+
+function card(it, opts = {}){
+  const st = normStatus(it.status), cls = CLS[st], imp = normImpact(it.impact), p = deParts(it);
+  const timeEl = h("div", {class: "c-time"});
+  if (p){
+    if (opts.ctx) timeEl.append(dayShort(p.ymd), h("small", {text: dmy(p.ymd)}));
+    else if (opts.showDay) timeEl.append(it.ohneZeit ? dayShort(p.ymd) : p.hm, h("small", {text: it.ohneZeit ? dmy(p.ymd) : dayShort(p.ymd)}));
+    else timeEl.append(it.ohneZeit ? "–" : p.hm);
+  }
+  const t = itemMs(it);
+  const due = st === "offen" && !it.ohneZeit && t !== null && t + 5 * 60000 < Date.now();
+  const hasScen = st === "offen" && (it.szenario_gruen || it.szenario_rot);
+  const mineLabel = it.von === "du" ? "eigene" : (it.lokal ? "eigene Einstufung" : null);
+  const body = h("div", {class: "c-body"},
+    h("div", {class: "c-meta"},
+      h("span", {class: "pill " + cls, text: PILL[st]}),
+      it.kategorie ? h("span", {class: "cat", text: it.kategorie}) : null,
+      mineLabel ? h("span", {class: "mine", text: mineLabel}) : null,
+      impEl(imp)),
+    h("h4", {class: "c-title", text: it.titel || "Ohne Titel"}),
+    it.text ? h("p", {class: "c-text", text: it.text}) : null,
+    it.werte ? h("p", {class: "c-vals", text: it.werte}) : null,
+    it.ergebnis && st !== "offen" && !it.werte ? h("p", {class: "c-vals", text: "Ergebnis: " + it.ergebnis}) : null,
+    hasScen ? h("ul", {class: "c-scen"},
+      it.szenario_gruen ? h("li", {class: "up"}, h("b", {text: "▲ Grün, "}), "wenn " + it.szenario_gruen) : null,
+      it.szenario_rot ? h("li", {class: "down"}, h("b", {text: "▼ Rot, "}), "wenn " + it.szenario_rot) : null) : null,
+    due ? h("p", {class: "c-due", text: S.auto ? "Das Ergebnis ist raus und wird bei der nächsten Prüfung eingetragen." : "Das Ergebnis ist raus, aber noch nicht eingetragen."}) : null,
+    foot(it, st),
+    S.open === it.id ? panel(it, st) : null);
+  return h("article", {class: "card " + cls, id: opts.noId ? null : "n-" + it.id}, timeEl, body);
+}
+
+function foot(it, st){
+  const src = safeUrl(it.url)
+    ? h("a", {href: it.url, target: "_blank", rel: "noopener noreferrer"}, (it.quelle || "Quelle") + " ↗")
+    : h("span", {text: it.quelle || ""});
+  const btn = h("button", {class: "btn", type: "button", "aria-expanded": String(S.open === it.id),
+    onclick: () => { S.open = S.open === it.id ? null : it.id; S.confirmDel = null; render(); }},
+    S.open === it.id ? "Schließen" : (st === "offen" ? "Selbst einstufen" : "Ändern"));
+  return h("div", {class: "c-foot"}, src, btn);
+}
+
+function panel(it, st){
+  const id = it.id, kids = [];
+  kids.push(h("span", {class: "lbl", text: "Selbst einstufen"}));
+  kids.push(h("div", {class: "row"}, STATI.map(s => h("button", {class: "btn set " + CLS[s], type: "button", "aria-pressed": String(st === s), onclick: () => setStatus(it, s)}, PILL[s]))));
+  if (it.lokal) kids.push(h("div", {class: "row"}, h("button", {class: "btn ghost", type: "button", onclick: () => resetStatus(it)}, "Eigene Einstufung entfernen")));
+  if (it.von === "du"){
+    kids.push(S.confirmDel === id
+      ? h("div", {class: "row"}, h("span", {class: "msg", text: "Wirklich löschen?"}),
+          h("button", {class: "btn danger", type: "button", onclick: () => delItem(it)}, "Ja, löschen"),
+          h("button", {class: "btn ghost", type: "button", onclick: () => { S.confirmDel = null; render(); }}, "Nein"))
+      : h("div", {class: "row"}, h("button", {class: "btn ghost", type: "button", onclick: () => { S.confirmDel = id; render(); }}, "Löschen")));
+  }
+  kids.push(h("p", {class: "msg", text: "Wird nur auf diesem Handy gespeichert."}));
+  return h("div", {class: "panel"}, kids);
+}
+
+function crow(it){
+  const p = deParts(it), st = normStatus(it.status);
+  return h("button", {class: "crow", type: "button", onclick: () => jumpTo(it)},
+    h("span", {class: "w"}, p ? `${dayShort(p.ymd)} ${dmy(p.ymd)}` : "", h("br"), p && !it.ohneZeit ? p.hm : ""),
+    h("span", {class: "t", text: it.titel || ""}),
+    h("span", {class: "s"}, impEl(normImpact(it.impact)), h("i", {class: "dot " + CLS[st], role: "img", "aria-label": LABEL[st]})));
+}
+
+function dayRow(D){
+  const b = bias(dayItems(S.news, D)), v = verdict(b.score), T = todayDE();
+  return h("li", null, h("button", {class: "dayrow" + (D === T ? " is-today" : ""), type: "button", onclick: () => setTab(D)},
+    h("span", {class: "dn"}, dayShort(D), h("small", {text: D === T ? "heute" : dmy(D)})),
+    meter(b.score, "mini"),
+    h("span", {class: "dv " + v.cls}, v.label, h("small", {text: b.c.offen ? `${b.c.offen} offen` : (b.score === null ? "keine News" : fmtScore(b.score))}))));
+}
+
+function howBlock(){
+  return h("div", {class: "foot"},
+    h("details", {class: "how"}, h("summary", {text: "So funktioniert die App"}),
+      h("p", {text: "Jede bewertete Nachricht zählt +1 (bullish), −1 (bearish) oder 0 (neutral), gewichtet mit ihrer Wichtigkeit von 1 bis 3. Die Summe geteilt durch das Gesamtgewicht ergibt einen Wert zwischen −1 (alles bearish) und +1 (alles bullish). Ab ±0,15 heißt es „leicht“, ab ±0,5 klar bullish oder bearish."}),
+      h("p", {text: "Ein Tag zählt alles, was auf seine US-Sitzung wirkt: Meldungen vom Vorabend nach US-Schluss, über Nacht und tagsüber. Die Woche nimmt zusätzlich die Ausgangslage aus der Vorwoche mit. Offene Termine zählen erst, wenn ihr Ergebnis eingetragen ist."}),
+      h("p", {text: "Claude prüft die Nachrichtenlage an Handelstagen jede Stunde, gründlich vor der Asien-, der London- und der New-York-Session. Ergebnisse großer Termine stehen meist wenige Minuten nach der Veröffentlichung in der App, Inflationsdaten von 14:30 Uhr zum Beispiel um 14:35 Uhr. Die App lädt den neuen Stand beim Öffnen und alle fünf Minuten, mit „Aktualisieren“ auch sofort. Willst du nicht auf die nächste Prüfung warten, öffne die Seite in Claude und tippe dort auf „Jetzt prüfen“."}),
+      h("p", {text: "Eigene Einstufungen und eigene News speichert die App nur auf diesem Handy."})),
+    h("p", {class: "fine", text: "Keine Anlageberatung. Der Bias zeigt nur, wie die Nachrichtenlage gewertet ist. Einstiege kommen aus deinem Chart."}));
+}
+
+function bandMin(D, tz, s, e){
+  const a = zparts(zonedToUTC(D, s, tz), TZ_DE), b = zparts(zonedToUTC(D, e, tz), TZ_DE);
+  const from = a.ymd === D ? a.min : (a.ymd < D ? 0 : 1440);
+  const to = b.ymd === D ? b.min : (b.ymd > D ? 1440 : 0);
+  return [from, to];
+}
+function strip(D, items){
+  const track = h("div", {class: "track"});
+  for (const [k, name, tz, s, e] of [["a", "Tokio", "Asia/Tokyo", "09:00", "15:30"], ["l", "London", "Europe/London", "08:00", "16:30"], ["n", "New York", TZ_NY, "09:30", "16:00"]]){
+    const [a, b] = bandMin(D, tz, s, e);
+    if (b > a) track.append(h("span", {class: "band " + k, style: `left:${pct(a)};width:${pct(b - a)}`, text: name}));
+  }
+  let n = 0;
+  for (const it of items){
+    if (it.ohneZeit) continue;
+    const p = deParts(it); if (!p) continue; n++;
+    track.append(h("span", {class: `tk ${CLS[normStatus(it.status)]} i${normImpact(it.impact)}`, style: `left:${pct(p.min)}`}));
+  }
+  if (D === todayDE()) track.append(h("span", {class: "now", id: "now-mark", style: `left:${pct(zparts(Date.now(), TZ_DE).min)}`}));
+  return h("div", {class: "strip", role: "img", "aria-label": `Börsenzeiten Tokio, London und New York und ${n} Termine am ${dayLong(D)}`},
+    track,
+    h("div", {class: "axis", "aria-hidden": "true"}, ["00", "06", "12", "18", "24"].map((t, i) => h("span", {style: `left:${i * 25}%`, text: t}))),
+    h("p", {class: "strip-cap", "aria-hidden": "true", text: "Balken: Börsenzeiten · Striche: Termine, gestrichelt = noch offen"}));
+}
+
+function group(title, note, items, opts, emptyText){
+  return h("section", {class: "grp"}, h("h3", null, title, note ? h("span", {class: "note", text: note}) : null),
+    items.length ? h("div", {class: "list"}, items.map(it => card(it, opts))) : h("p", {class: "empty", text: emptyText || "Keine Einträge."}));
+}
+
+function addBlock(D){
+  if (!S.addOpen){
+    return h("div", {class: "addwrap"}, h("button", {class: "btn add", type: "button", onclick: () => {
+      S.addOpen = true;
+      if (!S.add.time) S.add.time = D === todayDE() ? zparts(Date.now(), TZ_DE).hm : "15:30";
+      render();
+      const n = document.getElementById("add-text"); if (n) n.focus();
+    }}, "+ Eigene News eintragen"));
+  }
+  const sel = h("select", {id: "add-imp", onchange: e => { S.add.impact = e.target.value; }},
+    [["1", "Gering"], ["2", "Mittel"], ["3", "Hoch"]].map(([v, l]) => { const o = h("option", {value: v, text: l}); if (v === S.add.impact) o.selected = true; return o; }));
+  return h("form", {class: "addform", onsubmit: e => e.preventDefault()},
+    h("h3", {text: `Eigene News für ${dayShort(D)} ${dmy(D)}`}),
+    h("label", {class: "lbl", for: "add-text", text: "Schlagzeile oder Meldung"}),
+    h("textarea", {id: "add-text", rows: "3", placeholder: "z. B. Nvidia warnt vor schwächerem Umsatz in China", oninput: e => { S.add.text = e.target.value; }}, S.add.text),
+    h("div", {class: "two"},
+      h("div", null, h("label", {class: "lbl", for: "add-time", text: "Uhrzeit (deutsche Zeit)"}),
+        h("input", {id: "add-time", type: "time", value: S.add.time, oninput: e => { S.add.time = e.target.value; }})),
+      h("div", null, h("label", {class: "lbl", for: "add-imp", text: "Wichtigkeit"}), sel)),
+    h("span", {class: "lbl", text: "Einstufen und speichern"}),
+    h("div", {class: "row"}, ["bullish", "bearish", "neutral"].map(s => h("button", {class: "btn set " + CLS[s], type: "button", onclick: () => addNews(D, s)}, PILL[s]))),
+    h("p", {class: "msg", text: "Wird nur auf diesem Handy gespeichert."}),
+    h("div", {class: "row"}, h("button", {class: "btn ghost", type: "button", onclick: () => { S.addOpen = false; render(); }}, "Schließen")));
+}
+
+/* ---------- Große News ---------- */
+function dur(ms){
+  const m = Math.max(1, Math.round(ms / 60000));
+  if (m < 60) return m + " Min";
+  const hh = Math.floor(m / 60), mm = m % 60;
+  if (hh < 24) return hh + " Std" + (hh < 6 && mm ? " " + mm + " Min" : "");
+  const d = Math.floor(hh / 24), rh = hh % 24;
+  return d + (d === 1 ? " Tag" : " Tagen") + (d < 3 && rh ? " " + rh + " Std" : "");
+}
+function dayDiff(it){
+  const p = deParts(it);
+  return p ? Math.round((ymdUTC(p.ymd) - ymdUTC(todayDE())) / 864e5) : null;
+}
+function relText(it, kind){
+  const t = itemMs(it), now = Date.now(), n = dayDiff(it);
+  if (n === null) return "";
+  if (it.ohneZeit){
+    if (n === 0) return "heute";
+    if (n === 1) return "morgen";
+    if (n === -1) return "gestern";
+    return n > 0 ? `in ${n} Tagen` : `vor ${-n} Tagen`;
+  }
+  if (kind === "next"){
+    if (t <= now) return S.auto ? "Ergebnis wird eingetragen" : "Ergebnis steht aus";
+    if (n === 0) return "in " + dur(t - now);
+    return n === 1 ? "morgen" : `in ${n} Tagen`;
+  }
+  if (n === 0) return "vor " + dur(now - t);
+  return n === -1 ? "gestern" : `vor ${-n} Tagen`;
+}
+function isFresh(it){
+  if (it.ohneZeit){ const n = dayDiff(it); return n !== null && n >= -1 && n <= 0; }
+  const t = itemMs(it);
+  return t !== null && t <= Date.now() && Date.now() - t <= 864e5;
+}
+function tnRow(it, kind){
+  const st = normStatus(it.status), cls = CLS[st], p = deParts(it);
+  const fresh = kind === "recent" && isFresh(it);
+  const when = p ? `${dayShort(p.ymd)} ${dmy(p.ymd)}` + (it.ohneZeit ? "" : `, ${p.hm}`) : "";
+  const rel = relText(it, kind);
+  return h("button", {class: `tn-row ${cls}` + (fresh ? " is-new" : ""), type: "button", onclick: () => jumpTo(it)},
+    h("span", {class: "tn-top"},
+      h("span", {class: "pill " + cls, text: PILL[st]}),
+      h("span", {class: "tn-when", text: [when, rel].filter(Boolean).join(" · ")}),
+      fresh ? h("span", {class: "tn-new", text: "Neu"}) : null),
+    h("span", {class: "tn-title", text: it.titel || ""}),
+    it.werte ? h("span", {class: "tn-vals", text: it.werte}) : null);
+}
+function topNews(){
+  const now = Date.now();
+  const big = S.news.filter(it => normImpact(it.impact) === 3 && itemMs(it) !== null);
+  const recent = big.filter(it => normStatus(it.status) !== "offen" && itemMs(it) <= now && now - itemMs(it) <= 7 * 864e5)
+    .sort((a, b) => itemMs(b) - itemMs(a)).slice(0, 3);
+  const next = big.filter(it => normStatus(it.status) === "offen" && itemMs(it) > now - 3 * 864e5).sort(byTs).slice(0, 4);
+  const freshN = recent.filter(isFresh).length;
+  const hidden = Math.max(0, next.length - 2);
+  return h("section", {class: "tn" + (S.tnAll ? " all" : ""), "aria-labelledby": "tn-h"},
+    h("div", {class: "tn-head"}, h("h2", {id: "tn-h", text: "Große News"}), freshN ? h("span", {class: "tn-new", text: freshN + " neu"}) : null),
+    h("p", {class: "tn-sub", text: "Termine und Meldungen, die den Nasdaq stark bewegen"}),
+    h("h3", {class: "tn-h3", text: "Zuletzt raus"}),
+    recent.length ? h("div", {class: "tn-list recent"}, recent.map(it => tnRow(it, "recent"))) : h("p", {class: "empty tn-empty", text: "In den letzten 7 Tagen kam nichts Großes."}),
+    h("h3", {class: "tn-h3", text: "Als Nächstes"}),
+    next.length ? h("div", {class: "tn-list next"}, next.map(it => tnRow(it, "next"))) : h("p", {class: "empty tn-empty", text: "Keine großen Termine eingetragen."}),
+    hidden ? h("button", {class: "btn ghost tn-more", type: "button", "aria-expanded": String(!!S.tnAll), onclick: () => { S.tnAll = !S.tnAll; render(); }}, S.tnAll ? "Weniger anzeigen" : `${hidden} weitere anzeigen`) : null);
+}
+
+/* ---------- Ansichten ---------- */
+function buildWeek(W){
+  const out = [], wk = S.wochen[W];
+  const any = weekItems(S.news, W).length;
+  if (!any && !wk) out.push(h("p", {class: "empty big", text: "Für diese Woche sind noch keine News eingetragen."}));
+  if (wk && wk.fazit) out.push(h("section", {class: "sec fazit"}, h("h2", {text: "Wochenausblick"}), h("p", {text: wk.fazit})));
+  out.push(h("section", {class: "sec"}, h("h2", {text: "Tag für Tag"}), h("ol", {class: "days"}, weekDays(W).map(dayRow))));
+  const ctx = S.news.filter(it => it.kontext && it.woche === W).sort(byTs);
+  if (ctx.length) out.push(h("section", {class: "sec"}, h("h2", {text: "Ausgangslage aus der Vorwoche"}), h("div", {class: "list"}, ctx.map(it => card(it, {ctx: true})))));
+  const big = weekItems(S.news, W).filter(it => !it.kontext && normStatus(it.status) === "offen" && normImpact(it.impact) >= 2).sort(byTs);
+  if (any) out.push(h("section", {class: "sec"}, h("h2", {text: "Wichtige offene Termine"}),
+    big.length ? h("div", {class: "list"}, big.map(crow)) : h("p", {class: "empty", text: "Alle wichtigen Termine dieser Woche sind ausgewertet."})));
+  const fri = addDays(W, 4);
+  const later = S.news.filter(it => !it.kontext && (effDay(it) || "") > fri).sort(byTs).slice(0, 8);
+  if (later.length) out.push(h("section", {class: "sec"}, h("h2", null, "Danach", h("span", {class: "note", text: "nächste Termine nach dieser Woche"})), h("div", {class: "list"}, later.map(crow))));
+  out.push(howBlock());
+  return out;
+}
+
+function buildDay(D){
+  const b = bias(dayItems(S.news, D)), v = verdict(b.score);
+  const all = S.news.filter(it => !it.kontext && deParts(it));
+  const over = all.filter(it => effDay(it) === D && deParts(it).ymd < D).sort(byTs);
+  const today = all.filter(it => deParts(it).ymd === D && effDay(it) === D).sort(byTs);
+  const after = all.filter(it => deParts(it).ymd === D && (effDay(it) || "") > D).sort(byTs);
+  const out = [];
+  out.push(h("div", {class: "dayhead"}, h("h2", {text: dayLong(D)}), h("span", {class: "chip " + v.cls, text: v.label + (b.score === null ? "" : " · " + fmtScore(b.score))})));
+  out.push(strip(D, today.concat(after)));
+  if (over.length) out.push(group(dow(D) === 1 ? "Wochenende & über Nacht" : "Vorabend & über Nacht", "zählt für heute", over, {showDay: true}));
+  out.push(group(D === todayDE() ? "Heute" : "Im Tagesverlauf", null, today, {}, "Für diesen Tag sind keine Termine eingetragen."));
+  if (after.length) out.push(group("Nach US-Schluss", "zählt für " + DAYS_LONG[dow(nextWeekday(D))], after, {}));
+  out.push(addBlock(D));
+  out.push(howBlock());
+  return out;
+}
+
+function build(){
+  const main = [h("div", {id: "tabs-anchor"}), tabs()];
+  if (!S.ready) main.push(h("p", {class: "empty big", text: S.offline ? "Keine Verbindung. Die News laden, sobald du wieder online bist." : "Lade die News der Woche …"}));
+  else main.push(...(S.tab === "woche" ? buildWeek(S.week) : buildDay(S.tab)));
+  return [h("div", {class: "layout"},
+    h("div", {class: "l-head"}, installHint(), header()),
+    h("div", {class: "l-left"},
+      h("div", {class: "l-gauges"}, h("div", {class: "gauges"}, gauge("woche"), gauge("heute"))),
+      h("div", {class: "l-main"}, main)),
+    S.ready ? h("aside", {class: "l-tn", "aria-label": "Große News"}, topNews()) : null)];
+}
+
+function render(){
+  const ae = document.activeElement, fid = ae && ae.id;
+  let sel = null;
+  try { if (ae && typeof ae.selectionStart === "number") sel = [ae.selectionStart, ae.selectionEnd]; } catch (e) {}
+  document.getElementById("app").replaceChildren(...build());
+  if (fid){
+    const n = document.getElementById(fid);
+    if (n && n !== document.activeElement){
+      n.focus({preventScroll: true});
+      if (sel && n.setSelectionRange) try { n.setSelectionRange(sel[0], sel[1]); } catch (e) {}
+    }
+  }
+}
+
+/* ---------- Navigation ---------- */
+function scrollToContent(){
+  const a = document.getElementById("tabs-anchor");
+  if (!a) return;
+  const top = a.getBoundingClientRect().top + window.scrollY;
+  if (window.scrollY > top) window.scrollTo(0, top);
+}
+function setTab(t){ S.tab = t; S.open = null; S.confirmDel = null; render(); scrollToContent(); }
+function shiftWeek(n){
+  S.week = addDays(S.week, 7 * n);
+  const T = todayDE();
+  S.tab = (!isWeekend(T) && mondayOf(T) === S.week) ? T : "woche";
+  S.open = null; S.addOpen = false;
+  render();
+}
+function jumpTo(it){
+  if (it.kontext && it.woche){
+    S.week = it.woche; S.tab = "woche"; S.open = null;
+    render(); scrollToContent();
+    const el = document.getElementById("n-" + it.id);
+    if (el) el.scrollIntoView({block: "center"});
+    return;
+  }
+  const p = deParts(it);
+  let D = p ? p.ymd : effDay(it);
+  if (!D) return;
+  if (isWeekend(D)) D = effDay(it) || tradingDayOnOrAfter(D);
+  S.week = mondayOf(D); S.tab = D; S.open = null;
+  render(); scrollToContent();
+  const el = document.getElementById("n-" + it.id);
+  if (el) el.scrollIntoView({block: "center"});
+}
+
+/* ---------- Eigene Einstufungen und News (nur auf diesem Handy) ---------- */
+function setStatus(it, s){
+  if (it.von === "du"){
+    const own = L.own.find(x => x.id === it.id);
+    if (own){ own.status = s; own.aktualisiert = new Date().toISOString(); }
+  } else {
+    const orig = DATA && DATA.news.find(x => x.id === it.id);
+    if (orig && normStatus(orig.status) === s) delete L.overrides[it.id]; else L.overrides[it.id] = s;
+  }
+  saveLocal(); S.open = null; applyData(); render();
+  toast("Gespeichert: " + LABEL[s] + ".");
+}
+function resetStatus(it){
+  delete L.overrides[it.id];
+  saveLocal(); S.open = null; applyData(); render();
+  toast("Eigene Einstufung entfernt.");
+}
+function delItem(it){
+  L.own = L.own.filter(x => x.id !== it.id);
+  saveLocal(); S.open = null; S.confirmDel = null; applyData(); render();
+  toast("Gelöscht.");
+}
+function addNews(D, s){
+  const text = (S.add.text || "").trim();
+  if (!text){ toast("Schreib zuerst die Schlagzeile oder Meldung.", true); return; }
+  const hm = /^\d{2}:\d{2}$/.test(S.add.time) ? S.add.time : null;
+  L.own.push({
+    id: "du-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    ts: new Date(zonedToUTC(D, hm || "12:00", TZ_DE)).toISOString(), ohneZeit: !hm,
+    titel: text.slice(0, 140), text: text.length > 140 ? text.slice(0, 500) : "",
+    kategorie: "Markt", impact: normImpact(S.add.impact), status: s, von: "du",
+    quelle: "", url: "", kontext: false, aktualisiert: new Date().toISOString()
+  });
+  saveLocal();
+  S.add = {text: "", time: "", impact: "2"}; S.addOpen = false;
+  applyData(); render();
+  toast("Gespeichert: " + LABEL[s] + ".");
+}
+
+/* ---------- Daten laden ---------- */
+async function loadData(manual){
+  if (S.loading) return;
+  S.loading = true;
+  if (manual) render();
+  try {
+    const r = await fetch("data/news.json?t=" + Date.now(), {cache: "no-store"});
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    DATA = sanitize(await r.json());
+    lsSet(LS_DATA, JSON.stringify(DATA));
+    S.offline = navigator.onLine === false; S.loadedAt = Date.now();
+    if (manual){
+      const last = DATA.meta ? Date.parse(DATA.meta.letzterLauf) : NaN;
+      toast(isNaN(last) ? "Neuester Stand geladen." : "Neuester Stand geladen, geprüft " + whenDE(last) + " Uhr.");
+    }
+  } catch (e) {
+    S.offline = true;
+    if (manual) toast(DATA ? "Keine Verbindung. Du siehst den letzten Stand." : "Keine Verbindung. Versuch es gleich noch einmal.", true);
+  } finally {
+    S.loading = false;
+    applyData(); render();
+  }
+}
+
+function boot(){
+  try { const c = JSON.parse(lsGet(LS_DATA) || "null"); if (c) DATA = sanitize(c); } catch (e) {}
+  applyData(); render();
+  loadData(false);
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && Date.now() - S.loadedAt > 60000) loadData(false);
+});
+setInterval(() => { if (document.visibilityState === "visible") loadData(false); }, 300000);
+setInterval(() => {
+  const m = document.getElementById("now-mark");
+  if (m) m.style.left = pct(zparts(Date.now(), TZ_DE).min);
+}, 60000);
+
+boot();
+})();
+</script>
+</body>
+</html>
