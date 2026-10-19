@@ -5,6 +5,7 @@ Handy-App für Termine und Nachrichten mit Einfluss auf den Micro-Nasdaq-100-Fut
 - `index.html`: die App
 - `data/news.json`: die Meldungen. Claude aktualisiert die Datei an jedem Handelstag vor der Asien-, London- und New-York-Session.
 - `manifest.webmanifest`, `sw.js`, `icons/`: Installation auf dem Home-Bildschirm und Offline-Speicher
+- `.github/workflows/claude-suchen.yml`: startet eine neue Claude-Prüfung, wenn du in der App auf „Aktualisieren“ tippst. Dafür braucht das Repository das Secret `ROUTINE_TOKEN` (Claude-Schlüssel der Prüfung) und die App einmal einen GitHub-Schlüssel mit der Berechtigung „Actions: Read and write“ für dieses Repository. Der GitHub-Schlüssel bleibt nur auf dem Handy.
 
 Installieren auf dem iPhone: Seite in Safari öffnen, Teilen-Symbol, „Zum Home-Bildschirm“.
 

@@ -88,6 +88,19 @@ a{color:var(--accent)}
 .auto-note{margin:2px 0 0;font-size:.76rem;color:var(--faint);line-height:1.35}
 .auto-link{margin:4px 0 0;font-size:.76rem;line-height:1.35}
 .auto-link a{color:var(--accent);font-weight:600;text-decoration:none}
+.auto-link.quiet{color:var(--faint)}
+.auto-run{margin:4px 0 0;font-size:.76rem;line-height:1.35;color:var(--accent);font-weight:600}
+.auto-err{margin:4px 0 0;font-size:.76rem;line-height:1.35;color:var(--bear)}
+.linkbtn{background:none;border:0;padding:0;font:inherit;color:var(--accent);font-weight:600;cursor:pointer}
+.weeknav .reload:disabled{cursor:default;filter:none}
+.setup{margin:14px 0 0;padding:14px;border:1px solid var(--accent);border-radius:10px;background:var(--surface);display:grid;gap:8px}
+.setup h2{margin:0;font-size:1rem;line-height:1.3}
+.setup p{margin:0;font-size:.86rem;color:var(--muted);max-width:65ch}
+.setup ol{margin:0;padding-left:1.25em;font-size:.88rem;display:grid;gap:8px;max-width:65ch}
+.setup a{color:var(--accent);font-weight:600}
+.setup input{width:100%;max-width:32rem;font-family:var(--font-mono);font-size:16px;padding:8px 10px;border:1px solid var(--line-strong);border-radius:7px;background:var(--bg);color:var(--ink)}
+.setup .tip{color:var(--ink)}
+.foot .how .btn{margin-top:10px}
 .weeknav{display:flex;align-items:center;gap:4px}
 .weeknav button{width:36px;height:36px;border:1px solid var(--line-strong);background:var(--surface);border-radius:8px;cursor:pointer;font-size:1.1rem;line-height:1}
 .weeknav button:hover{border-color:var(--ink)}
@@ -386,8 +399,21 @@ const pct = min => (Math.max(0, Math.min(1440, min)) / 1440 * 100).toFixed(2) + 
 /* ---------- Speicher auf dem Handy ---------- */
 const CLAUDE_PAGE = "https://claude.ai/artifact/NkzF6zU1P3y4jnssPk8qRK";
 const LS_LOCAL = "mnq-news-bias:lokal:v1", LS_DATA = "mnq-news-bias:daten:v1", LS_HINT = "mnq-news-bias:hinweis:v1";
+/* Neue Suche per Knopf: Die App startet über GitHub (Workflow claude-suchen.yml) die Claude-Prüfung. */
+const GH_REPO = "ilazzzz/mnq-news-bias-", GH_FLOW = "claude-suchen.yml";
+const GH_TOKEN_NEW = "https://github.com/settings/personal-access-tokens/new?name=MNQ+News-Bias+App&description=Startet+die+Claude-Suche+aus+der+App&expires_in=none&actions=write";
+const LS_GH = "mnq-news-bias:github-schluessel:v1", LS_RUN = "mnq-news-bias:suche:v1", LS_SETUP = "mnq-news-bias:einrichtung-gezeigt:v1";
+const RUN_PAUSE = 10 * 60000, RUN_MAX = 20 * 60000;
 function lsGet(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
 function lsSet(k, v){ try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+function lsDel(k){ try { localStorage.removeItem(k); } catch (e) {} }
+function loadRun(){
+  try {
+    const r = JSON.parse(lsGet(LS_RUN) || "null");
+    if (r && typeof r.seit === "number" && Date.now() - r.seit < RUN_MAX) return r;
+  } catch (e) {}
+  return null;
+}
 function sanitize(d){
   return {
     news: Array.isArray(d && d.news) ? d.news.filter(x => x && typeof x === "object" && typeof x.id === "string") : [],
@@ -411,7 +437,8 @@ const S = {
   standalone: (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true,
   hintHidden: lsGet(LS_HINT) === "1",
   week: mondayOf(todayTrading()), tab: isWeekend(todayDE()) ? "woche" : todayTrading(),
-  open: null, confirmDel: null, addOpen: false, add: {text: "", time: "", impact: "2"}
+  open: null, confirmDel: null, addOpen: false, add: {text: "", time: "", impact: "2"},
+  ghKey: lsGet(LS_GH) || "", keyInput: "", keyBusy: false, setupOpen: false, firing: false, run: loadRun()
 };
 
 function applyData(){
@@ -521,9 +548,11 @@ function header(){
       h("p", {class: "sub", text: "Micro-Nasdaq-100-Future · alle Zeiten deutsche Zeit" + (!au && st ? " · Stand " + st : "")}),
       au ? h("p", {class: "auto"}, h("i", {class: "live" + (S.offline ? " off" : ""), "aria-hidden": "true"}), au.line) : null,
       au && au.note ? h("p", {class: "auto-note", text: "Letzte Prüfung: " + au.note}) : null,
-      h("p", {class: "auto-link"}, h("a", {href: CLAUDE_PAGE, target: "_blank", rel: "noopener noreferrer"}, "Sofort prüfen lassen: in Claude öffnen ↗"))),
+      searchLine()),
     h("div", {class: "weeknav"},
-      h("button", {type: "button", class: "reload", onclick: () => loadData(true)}, h("span", {class: "ri" + (S.loading ? " spin" : ""), "aria-hidden": "true"}, "↻"), "Aktualisieren"),
+      h("button", {type: "button", class: "reload", disabled: S.firing, onclick: refresh},
+        h("span", {class: "ri" + (S.loading || S.firing || searching() ? " spin" : ""), "aria-hidden": "true"}, "↻"),
+        searching() ? "Sucht …" : "Aktualisieren"),
       h("button", {type: "button", "aria-label": "Vorige Woche", onclick: () => shiftWeek(-1)}, "‹"),
       h("span", {class: "wk"}, `KW ${isoWeek(S.week)}`, h("small", {text: `${dmy(S.week)}–${dmy(addDays(S.week, 4))}`})),
       h("button", {type: "button", "aria-label": "Nächste Woche", onclick: () => shiftWeek(1)}, "›")));
@@ -534,6 +563,180 @@ function installHint(){
   return h("div", {class: "hint", role: "note"},
     h("p", null, h("b", {text: "Als App installieren: "}), "Tippe in Safari auf das Teilen-Symbol und dann auf „Zum Home-Bildschirm“."),
     h("button", {class: "btn ghost", type: "button", onclick: () => { S.hintHidden = true; lsSet(LS_HINT, "1"); render(); }}, "Ausblenden"));
+}
+
+/* ---------- Neue Suche per Knopf ---------- */
+const searching = () => !!(S.run && !S.run.fehler);
+const claudeLink = text => h("a", {href: CLAUDE_PAGE, target: "_blank", rel: "noopener noreferrer"}, text);
+function searchLine(){
+  if (searching()){
+    return h("p", {class: "auto-run", role: "status"}, `Claude sucht gerade nach neuen News, seit ${dur(Date.now() - S.run.seit)}. Der neue Stand erscheint hier von selbst.`);
+  }
+  if (S.run && S.run.fehler){
+    return h("p", {class: "auto-err", role: "status"}, "Die Suche ist nicht gestartet. " + S.run.fehler + " ",
+      h("button", {class: "linkbtn", type: "button", onclick: openSetup}, "Einrichtung ansehen"));
+  }
+  if (!S.ghKey){
+    return h("p", {class: "auto-link"}, "Neue Suche durch Claude: ",
+      h("button", {class: "linkbtn", type: "button", onclick: openSetup}, "Einrichten"), " · ", claudeLink("in Claude öffnen ↗"));
+  }
+  return h("p", {class: "auto-link quiet", text: "„Aktualisieren“ lässt Claude neu suchen."});
+}
+
+function openSetup(){
+  S.setupOpen = true;
+  render();
+  const el = document.getElementById("setup");
+  if (el) el.scrollIntoView({block: "nearest", behavior: "smooth"});
+}
+function setupPanel(){
+  if (!S.setupOpen) return null;
+  const close = h("button", {class: "btn ghost", type: "button", onclick: () => { S.setupOpen = false; render(); }}, "Schließen");
+  if (S.ghKey){
+    return h("section", {class: "setup", id: "setup", "aria-labelledby": "setup-h"},
+      h("h2", {id: "setup-h", text: "„Aktualisieren“ startet Claude ✓"}),
+      h("p", {text: "Der GitHub-Schlüssel ist auf diesem Handy gespeichert. Tippst du auf „Aktualisieren“, sucht Claude neu. Das geht höchstens alle 10 Minuten und dauert ein paar Minuten."}),
+      h("div", {class: "row"}, h("button", {class: "btn", type: "button", onclick: removeKey}, "Schlüssel entfernen"), close));
+  }
+  const inSafari = !S.standalone && /iPhone|iPad|iPod/.test(navigator.userAgent);
+  return h("section", {class: "setup", id: "setup", "aria-labelledby": "setup-h"},
+    h("h2", {id: "setup-h", text: "„Aktualisieren“ soll Claude starten"}),
+    h("p", {text: "Dafür braucht die App einmal einen GitHub-Schlüssel. Er bleibt nur auf diesem Handy und kann nur die Suche starten."}),
+    inSafari ? h("p", {class: "tip", text: "Tipp: Mach das in der App auf dem Home-Bildschirm. Safari und die App haben getrennte Speicher."}) : null,
+    h("ol", null,
+      h("li", null, h("a", {href: GH_TOKEN_NEW, target: "_blank", rel: "noopener noreferrer"}, "Schlüssel bei GitHub erstellen ↗"), h("br"),
+        "Bei „Repository access“ wählst du „Only select repositories“ und dann „mnq-news-bias-“. Danach unten auf „Generate token“ tippen und den Schlüssel kopieren."),
+      h("li", null, "Schlüssel hier einfügen und speichern.")),
+    h("label", {class: "lbl", for: "gh-key", text: "GitHub-Schlüssel"}),
+    h("input", {id: "gh-key", type: "password", autocomplete: "off", autocapitalize: "off", spellcheck: "false", placeholder: "github_pat_…", value: S.keyInput, oninput: e => { S.keyInput = e.target.value; }}),
+    h("div", {class: "row"}, h("button", {class: "btn primary", type: "button", disabled: S.keyBusy, onclick: saveKey}, S.keyBusy ? "Prüfe …" : "Speichern"), close),
+    h("p", {text: "Einmal muss außerdem der Claude-Schlüssel bei GitHub hinterlegt sein, unter dem Namen „ROUTINE_TOKEN“. Die Anleitung steht im Chat mit Claude."}),
+    h("p", null, "Ohne Einrichtung: ", claudeLink("in Claude öffnen und dort „Jetzt prüfen“ tippen ↗")));
+}
+
+function gh(path, opts, key){
+  const o = Object.assign({cache: "no-store"}, opts || {});
+  o.headers = Object.assign({"Accept": "application/vnd.github+json", "Authorization": "Bearer " + (key || S.ghKey)}, o.body ? {"Content-Type": "application/json"} : {});
+  const sep = path.includes("?") ? "&" : "?";
+  return fetch("https://api.github.com/repos/" + GH_REPO + path + (o.method && o.method !== "GET" ? "" : sep + "_=" + Date.now()), o);
+}
+async function saveKey(){
+  const key = (S.keyInput || "").trim();
+  if (!/^(github_pat_|ghp_)[A-Za-z0-9_]{20,}$/.test(key)){ toast("Das sieht nicht wie ein GitHub-Schlüssel aus. Er beginnt mit „github_pat_“.", true); return; }
+  S.keyBusy = true; render();
+  try {
+    const r = await gh("/actions/workflows/" + GH_FLOW, null, key);
+    if (r.status === 401){ toast("GitHub kennt diesen Schlüssel nicht. Kopiere ihn noch einmal.", true); return; }
+    if (r.status === 403 || r.status === 404){ toast("Der Schlüssel darf nicht auf „mnq-news-bias-“ zugreifen. Wähle das Repository beim Erstellen aus.", true); return; }
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    if (!lsSet(LS_GH, key)){ toast("Speichern auf diesem Handy hat nicht geklappt.", true); return; }
+    S.ghKey = key; S.keyInput = ""; S.setupOpen = false;
+    if (S.run && S.run.fehler){ S.run = null; saveRun(); }
+    toast("Gespeichert. Ab jetzt startet „Aktualisieren“ eine neue Suche.");
+  } catch (e) {
+    toast("Keine Verbindung zu GitHub. Versuch es gleich noch einmal.", true);
+  } finally {
+    S.keyBusy = false; render();
+  }
+}
+function removeKey(){
+  S.ghKey = ""; S.keyInput = ""; lsDel(LS_GH);
+  if (S.run && S.run.fehler){ S.run = null; saveRun(); }
+  render();
+  toast("Schlüssel entfernt.");
+}
+
+function saveRun(){ if (S.run) lsSet(LS_RUN, JSON.stringify(S.run)); else lsDel(LS_RUN); }
+async function refresh(){
+  if (S.loading || S.firing) return;
+  const ok = await loadData("spin");
+  if (!ok){ toast(DATA ? "Keine Verbindung. Du siehst den letzten Stand." : "Keine Verbindung. Versuch es gleich noch einmal.", true); return; }
+  if (searching()){ toast(`Claude sucht noch, seit ${dur(Date.now() - S.run.seit)}. Der neue Stand kommt von selbst.`); return; }
+  if (S.run && S.run.fehler){ S.run = null; saveRun(); }
+  const last = S.auto ? Date.parse(S.auto.letzterLauf) : NaN;
+  const lastText = isNaN(last) ? "" : ", geprüft " + whenDE(last) + " Uhr";
+  if (!S.ghKey){
+    toast("Neuester Stand geladen" + lastText + ".");
+    if (lsGet(LS_SETUP) !== "1"){ lsSet(LS_SETUP, "1"); openSetup(); }
+    else render();
+    return;
+  }
+  if (!isNaN(last) && Date.now() - last < RUN_PAUSE){
+    toast(`Claude hat gerade erst geprüft (${whenDE(last)} Uhr). Neue Suche ab ${whenDE(last + RUN_PAUSE)} Uhr.`);
+    render();
+    return;
+  }
+  await startSearch();
+}
+async function startSearch(){
+  S.firing = true; render();
+  try {
+    const r = await gh("/actions/workflows/" + GH_FLOW + "/dispatches", {method: "POST", body: JSON.stringify({ref: "main"})});
+    if (r.status === 401 || r.status === 403 || r.status === 404){
+      toast(r.status === 401 ? "Der GitHub-Schlüssel gilt nicht mehr. Richte ihn neu ein." : "Der GitHub-Schlüssel darf die Suche nicht starten. Richte ihn neu ein.", true);
+      S.ghKey = ""; lsDel(LS_GH); S.setupOpen = true;
+      return;
+    }
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    S.run = {seit: Date.now(), vorher: S.auto ? String(S.auto.letzterLauf || "") : ""};
+    saveRun();
+    toast("Claude sucht jetzt nach neuen News. Das dauert ein paar Minuten.");
+  } catch (e) {
+    toast("Die Suche konnte nicht starten. Prüf die Verbindung und versuch es noch einmal.", true);
+  } finally {
+    S.firing = false; render();
+  }
+}
+function checkRunDone(){
+  if (!searching() || !S.auto) return;
+  const now = String(S.auto.letzterLauf || ""), t = Date.parse(now);
+  if (now && now !== S.run.vorher && t >= S.run.seit - 60000){
+    const note = str(S.auto.notiz, 200);
+    S.run = null; saveRun();
+    toast("Claude ist fertig" + (note ? ": " + note : "."));
+  }
+}
+async function runFailed(id){
+  let why = "Bei GitHub ist ein Fehler aufgetreten.";
+  try {
+    const r = await gh("/actions/runs/" + id + "/jobs");
+    if (r.ok){
+      const steps = (((await r.json()).jobs || [])[0] || {}).steps || [];
+      const bad = steps.find(s => s.conclusion === "failure");
+      if (bad && bad.name === "Claude-Schlüssel vorhanden") why = "Bei GitHub fehlt noch der Claude-Schlüssel (ROUTINE_TOKEN).";
+      else if (bad && bad.name === "Claude starten") why = "Claude hat den Start abgelehnt. Vielleicht passt der Claude-Schlüssel nicht mehr, oder das Stundenlimit ist erreicht.";
+    }
+  } catch (e) {}
+  if (!searching()) return;
+  S.run.fehler = why; saveRun(); render();
+  toast("Die Suche ist nicht gestartet.", true);
+}
+let watching = false;
+async function watchRun(){
+  if (!searching() || watching || document.visibilityState !== "visible") return;
+  watching = true;
+  try {
+    await loadData();
+    if (!searching()) return;
+    if (!S.run.ok && S.ghKey){
+      const r = await gh("/actions/workflows/" + GH_FLOW + "/runs?event=workflow_dispatch&per_page=5");
+      if (r.ok){
+        const run = ((await r.json()).workflow_runs || []).find(x => Date.parse(x.created_at) >= S.run.seit - 120000);
+        if (run && run.status === "completed"){
+          if (run.conclusion === "success"){ S.run.ok = true; saveRun(); }
+          else await runFailed(run.id);
+        }
+      }
+    }
+    if (searching() && Date.now() - S.run.seit > RUN_MAX){
+      S.run = null; saveRun();
+      toast("Die Suche dauert länger als gedacht. Der neue Stand erscheint von selbst, sobald er da ist.");
+    }
+  } catch (e) {
+  } finally {
+    watching = false;
+    render();
+  }
 }
 
 function gauge(kind){
@@ -641,8 +844,10 @@ function howBlock(){
     h("details", {class: "how"}, h("summary", {text: "So funktioniert die App"}),
       h("p", {text: "Jede bewertete Nachricht zählt +1 (bullish), −1 (bearish) oder 0 (neutral), gewichtet mit ihrer Wichtigkeit von 1 bis 3. Die Summe geteilt durch das Gesamtgewicht ergibt einen Wert zwischen −1 (alles bearish) und +1 (alles bullish). Ab ±0,15 heißt es „leicht“, ab ±0,5 klar bullish oder bearish."}),
       h("p", {text: "Ein Tag zählt alles, was auf seine US-Sitzung wirkt: Meldungen vom Vorabend nach US-Schluss, über Nacht und tagsüber. Die Woche nimmt zusätzlich die Ausgangslage aus der Vorwoche mit. Offene Termine zählen erst, wenn ihr Ergebnis eingetragen ist."}),
-      h("p", {text: "Claude prüft die Nachrichtenlage an Handelstagen jede Stunde, gründlich vor der Asien-, der London- und der New-York-Session. Ergebnisse großer Termine stehen meist wenige Minuten nach der Veröffentlichung in der App, Inflationsdaten von 14:30 Uhr zum Beispiel um 14:35 Uhr. Die App lädt den neuen Stand beim Öffnen und alle fünf Minuten, mit „Aktualisieren“ auch sofort. Willst du nicht auf die nächste Prüfung warten, öffne die Seite in Claude und tippe dort auf „Jetzt prüfen“."}),
-      h("p", {text: "Eigene Einstufungen und eigene News speichert die App nur auf diesem Handy."})),
+      h("p", {text: "Claude prüft die Nachrichtenlage an Handelstagen jede Stunde, gründlich vor der Asien-, der London- und der New-York-Session. Ergebnisse großer Termine stehen meist wenige Minuten nach der Veröffentlichung in der App. Die App lädt den neuen Stand beim Öffnen und alle fünf Minuten."}),
+      h("p", {text: "„Aktualisieren“ lädt sofort den neuesten Stand. Ist die Suche per Knopf eingerichtet, startet der Knopf außerdem eine neue Suche durch Claude, höchstens alle 10 Minuten. Nach ein paar Minuten erscheint das Ergebnis von selbst. Ohne Einrichtung öffnest du die Seite in Claude und tippst dort auf „Jetzt prüfen“."}),
+      h("p", {text: "Eigene Einstufungen, eigene News und den GitHub-Schlüssel speichert die App nur auf diesem Handy."}),
+      h("button", {class: "btn", type: "button", onclick: openSetup}, S.ghKey ? "Suche per Knopf: eingerichtet" : "Suche per Knopf einrichten")),
     h("p", {class: "fine", text: "Keine Anlageberatung. Der Bias zeigt nur, wie die Nachrichtenlage gewertet ist. Einstiege kommen aus deinem Chart."}));
 }
 
@@ -808,7 +1013,7 @@ function build(){
   if (!S.ready) main.push(h("p", {class: "empty big", text: S.offline ? "Keine Verbindung. Die News laden, sobald du wieder online bist." : "Lade die News der Woche …"}));
   else main.push(...(S.tab === "woche" ? buildWeek(S.week) : buildDay(S.tab)));
   return [h("div", {class: "layout"},
-    h("div", {class: "l-head"}, installHint(), header()),
+    h("div", {class: "l-head"}, installHint(), header(), setupPanel()),
     h("div", {class: "l-left"},
       h("div", {class: "l-gauges"}, h("div", {class: "gauges"}, gauge("woche"), gauge("heute"))),
       h("div", {class: "l-main"}, main)),
@@ -902,40 +1107,42 @@ function addNews(D, s){
 }
 
 /* ---------- Daten laden ---------- */
-async function loadData(manual){
-  if (S.loading) return;
+// mode "spin": Knopf dreht sich, solange geladen wird. Gibt zurück, ob das Laden geklappt hat.
+async function loadData(mode){
+  if (S.loading) return false;
   S.loading = true;
-  if (manual) render();
+  if (mode === "spin") render();
+  let ok = false;
   try {
     const r = await fetch("data/news.json?t=" + Date.now(), {cache: "no-store"});
     if (!r.ok) throw new Error("HTTP " + r.status);
     DATA = sanitize(await r.json());
     lsSet(LS_DATA, JSON.stringify(DATA));
     S.offline = navigator.onLine === false; S.loadedAt = Date.now();
-    if (manual){
-      const last = DATA.meta ? Date.parse(DATA.meta.letzterLauf) : NaN;
-      toast(isNaN(last) ? "Neuester Stand geladen." : "Neuester Stand geladen, geprüft " + whenDE(last) + " Uhr.");
-    }
+    ok = !S.offline;
   } catch (e) {
     S.offline = true;
-    if (manual) toast(DATA ? "Keine Verbindung. Du siehst den letzten Stand." : "Keine Verbindung. Versuch es gleich noch einmal.", true);
   } finally {
     S.loading = false;
-    applyData(); render();
+    applyData(); checkRunDone(); render();
   }
+  return ok;
 }
 
 function boot(){
   try { const c = JSON.parse(lsGet(LS_DATA) || "null"); if (c) DATA = sanitize(c); } catch (e) {}
   applyData(); render();
-  loadData(false);
+  if (searching()) watchRun(); else loadData();
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 }
 
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible" && Date.now() - S.loadedAt > 60000) loadData(false);
+  if (document.visibilityState !== "visible") return;
+  if (searching()) watchRun();
+  else if (Date.now() - S.loadedAt > 60000) loadData();
 });
-setInterval(() => { if (document.visibilityState === "visible") loadData(false); }, 300000);
+setInterval(() => { if (document.visibilityState === "visible" && !searching()) loadData(); }, 300000);
+setInterval(watchRun, 20000);
 setInterval(() => {
   const m = document.getElementById("now-mark");
   if (m) m.style.left = pct(zparts(Date.now(), TZ_DE).min);

@@ -1,5 +1,5 @@
 // MNQ News-Bias: Offline-Speicher. App-Hülle aus dem Cache, Seite und Daten immer zuerst frisch aus dem Netz.
-const CACHE = "mnq-news-bias-v1";
+const CACHE = "mnq-news-bias-v2";
 const SHELL = [
   "./",
   "./index.html",

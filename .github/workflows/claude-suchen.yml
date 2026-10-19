@@ -1,0 +1,44 @@
+name: Claude suchen lassen
+
+# Startet eine neue Claude-Prüfung, wenn du in der App auf „Aktualisieren“ tippst.
+# Braucht das Repository-Secret ROUTINE_TOKEN: den Schlüssel der Claude-Prüfung
+# (claude.ai/code/routines → Prüfung bearbeiten → Trigger „API“ → Generate token).
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: claude-suchen
+  cancel-in-progress: false
+
+jobs:
+  start:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Claude-Schlüssel vorhanden
+        env:
+          ROUTINE_TOKEN: ${{ secrets.ROUTINE_TOKEN }}
+        run: |
+          if [ -z "$ROUTINE_TOKEN" ]; then
+            echo "::error::Das Secret ROUTINE_TOKEN fehlt. Lege es unter Settings → Secrets and variables → Actions an."
+            exit 1
+          fi
+
+      - name: Claude starten
+        env:
+          ROUTINE_TOKEN: ${{ secrets.ROUTINE_TOKEN }}
+        run: |
+          code=$(curl -sS -o antwort.json -w '%{http_code}' -X POST \
+            "https://api.anthropic.com/v1/claude_code/routines/trig_01YGceGePLTHqMiszqqxJQuL/fire" \
+            -H "Authorization: Bearer $ROUTINE_TOKEN" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "Content-Type: application/json" \
+            -d '{"text":"Von Hand gestartet über den Knopf „Aktualisieren“ in der iPhone-App. Mach eine schnelle Prüfung (Schritte 1 bis 4, 8 und 9), egal wie spät es ist."}')
+          echo "Antwort von Claude: HTTP $code"
+          if [ "$code" != "200" ]; then
+            # Nur Fehlertyp und Meldung zeigen. Die Sitzungsdaten bleiben privat.
+            python3 -c "import json; e = json.load(open('antwort.json')).get('error', {}); print('Fehler:', e.get('type'), '-', e.get('message'))" || true
+            exit 1
+          fi
